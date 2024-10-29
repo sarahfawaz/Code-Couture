@@ -62,6 +62,14 @@ void initializeShipGrid (struct Player *p) {
     }
 }
 
+void initializeSmokeGrid (struct Player *p) {
+    for (int i=0; i<p->rows; i++) {
+        for (int j=0; j<p->columns; j++) {
+            p->shipGrid[i][j]='~';
+        }
+    }
+}
+
 // prints the grid
 void printGrid (struct Player *p) {
     printf("\tA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\n");
@@ -309,7 +317,7 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
 void radar (struct Player *p, int col, int row) {
     for (int i=row; i<=row+1; i++) {
         for (int j=col; j<=col+1; j++) {
-            if (p->grid[i][j]=='X') {
+            if (p->smokeGrid[i][j]=='X') {
                 printf("Enemy ships found.\n");
                 return;
             }
