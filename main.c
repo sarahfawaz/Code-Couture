@@ -285,6 +285,7 @@ void radar (struct Player *p, int col, int row) {
 
 bool checkRadarValidity (int row, int col) {
     if (row==9 || col==9) {
+        printf("Index out of bounds.\n");
         return false;
     } else return true;
 }
@@ -597,8 +598,8 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
-            while (!checkRadarValidity(convertToColumnIndex(location[0]), getRow(location))) {
-                printf("Index out of bounds, please try again.\n");
+            while (!checkRadarValidity(convertToColumnIndex(location[0]), getRow(location)) || !validCoordinates(location)) {
+                printf("Please try again.\n");
                 scanf("%s", &location);
             }
             radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
