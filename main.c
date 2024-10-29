@@ -292,50 +292,10 @@ bool checkRadarValidity (int row, int col) {
 
 
 // smoke hides ships from radars in 2x2 area
-void smoke (struct Player *p, int col, int row, int position) {
-    if(position = 1){
-        p->smokeGrid[row][col] = '~';
-        if (row < 9) {
-            p->smokeGrid[row + 1][col] = '~';
-        }
-        if (col < 9) {
-            p->smokeGrid[row][col + 1] = '~';
-        }
-        if (col < 9 && row < 9) {
-            p->smokeGrid[row + 1][col + 1] = '~';
-        }
-    }else if(position = 2){
-        p->smokeGrid[row][col] = '~';
-        if (row < 9) {
-            p->smokeGrid[row + 1][col] = '~';
-        }
-        if (col > 1) {
-            p->smokeGrid[row][col - 1] = '~';
-        }
-        if (col > 1 && row < 9) {
-            p->smokeGrid[row + 1][col - 1] = '~';
-        }
-    }else if(position = 3){
-        p->smokeGrid[row][col] = '~';
-        if (row > 1) {
-            p->smokeGrid[row - 1][col] = '~';
-        }
-        if (col < 9) {
-            p->smokeGrid[row][col + 1] = '~';
-        }
-        if (col < 9 && row > 1) {
-            p->smokeGrid[row - 1][col + 1] = '~';
-        }
-    }else if(position = 4){
-        p->smokeGrid[row][col] = '~';
-        if (row > 1) {
-            p->smokeGrid[row - 1][col] = '~';
-        }
-        if (col > 1) {
-            p->smokeGrid[row][col - 1] = '~';
-        }
-        if (col > 1 && row > 1) {
-            p->smokeGrid[row - 1][col - 1] = '~';
+void smoke (struct Player *p, int col, int row) {
+    for (int i=row; i<=row+1; i++) {
+        for (int j=col; j<=col+1; j++) {
+            p->smokeGrid[i][j] = '~';
         }
     }
 }
