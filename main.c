@@ -716,9 +716,10 @@ void main(void)
         } else {
             printf("Torpedo is not unlocked yet.\n");
         }
+        
+        }
         alternatePlayers(&nextPlayer,&p1,&p2);
         alternatePlayers(&otherPlayer,&p1,&p2);
-        }
 
 }
 }
