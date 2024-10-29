@@ -430,7 +430,7 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
 
     }
 
-    printGrid(otherPlayer);
+    printDisplayedGrid(nextPlayer);
 
 }
 
@@ -650,11 +650,11 @@ void main(void)
 
     while (true) {
         char move[10];
-        printf("%s, what is your nextt move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
+        printf("%s, What is your next move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
         scanf("%s", &move);
         toLower(move);
         while ((strcmp(move, "fire")) != 0 && (strcmp(move, "radar")) != 0 && (strcmp(move, "smoke")) != 0 && (strcmp(move, "artillery")) != 0 && (strcmp(move, "torpedo")) != 0) {
-            printf("Invalid input. %s, what would you like to do?\nfire\nradar\nsmoke\nartillery\ntorpedo", nextPlayer->name);
+            printf("Invalid input. %s, what would you like to do?\nfire\nradar\nsmoke\nartillery\ntorpedo\n", nextPlayer->name);
             scanf("%s", &move);
             toLower(move);
         }
@@ -667,7 +667,7 @@ void main(void)
                 fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
         }else if((strcmp(move, "radar")) == 0){
             if(nextPlayer->radarCount == 0){
-                printf("%s, you do not have any more radars. Turn skipped.", nextPlayer->name);
+                printf("%s, you do not have any more radars. Turn skipped.\n", nextPlayer->name);
                 alternatePlayers(&nextPlayer,&p1,&p2);
                 alternatePlayers(&otherPlayer,&p1,&p2);
                 continue;
@@ -684,13 +684,13 @@ void main(void)
             radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location), position);
         }else if((strcmp(move, "smoke")) == 0){
             if(nextPlayer->smokeCount == 0){
-                printf("%s, you do not have any smokes right now. Turn skipped.", nextPlayer->name);
+                printf("%s, you do not have any smokes right now. Turn skipped.\n", nextPlayer->name);
                 alternatePlayers(&nextPlayer,&p1,&p2);
                 alternatePlayers(&otherPlayer,&p1,&p2);
                 continue;
             }
             nextPlayer->smokeCount--;
-            printf("Where would you like to activate your smoke?");
+            printf("Where would you like to activate your smoke? ");
             scanf("%s", &location);
             printf("In which position is your selection?\n(1)top-left\n(2)top-right\n(3)bottom-left\n(4)bottom-right\n");
             scanf("%d", &position);
@@ -716,7 +716,7 @@ void main(void)
         } else {
             printf("Torpedo is not unlocked yet.\n");
         }
-        
+
         }
         alternatePlayers(&nextPlayer,&p1,&p2);
         alternatePlayers(&otherPlayer,&p1,&p2);
