@@ -283,6 +283,13 @@ void radar (struct Player *p, int col, int row) {
     printf("No enemy ships found.\n");
 }
 
+bool checkRadarValidity (int row, int col) {
+    if (row==9 || col==9) {
+        return false;
+    } else return true;
+}
+
+
 // smoke hides ships from radars in 2x2 area
 void smoke (struct Player *p, int col, int row, int position) {
     if(position = 1){
@@ -590,6 +597,10 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
+            while (!checkRadarValidity(convertToColumnIndex(location[0]), getRow(location))) {
+                printf("Invalid coordinates, please try again.\n");
+                scanf("%s", &location);
+            }
             radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
         }else if((strcmp(move, "smoke")) == 0){
             if(nextPlayer->smokeCount == 0){
