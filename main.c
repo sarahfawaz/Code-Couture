@@ -575,7 +575,7 @@ void main(void)
             radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
         }else if((strcmp(move, "smoke")) == 0){
             if(nextPlayer->smokeCount == 0){
-                printf("%s, you do not have any smokes right now. Turn skipped.\n", nextPlayer->name);
+                printf("%s, you do not have the option to use the smoke move right now.\nIt can be used each time an opponent's ship is sunk.\nTurn skipped.\n", nextPlayer->name);
                 alternatePlayers(&nextPlayer,&p1,&p2);
                 alternatePlayers(&otherPlayer,&p1,&p2);
                 continue;
