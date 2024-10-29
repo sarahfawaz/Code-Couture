@@ -560,6 +560,7 @@ void main(void)
         }
         nextPlayer->placedShips = true;
         alternatePlayers(&nextPlayer,&p1,&p2);
+        system("clear");
     }
 
     while (true) {
