@@ -718,8 +718,16 @@ void main(void)
         }
 
         }
-        alternatePlayers(&nextPlayer,&p1,&p2);
-        alternatePlayers(&otherPlayer,&p1,&p2);
+    if(p1.BattleshipCount<1 && p1.CarrierCount<1 && p1.DestroyerCount<1 && p1.SubmarineCount<1){
+        printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
+        break;
+    }
+    if(p2.BattleshipCount<1 && p2.CarrierCount<1 && p2.DestroyerCount<1 && p2.SubmarineCount<1){
+        printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
+        break;
+    }
+    alternatePlayers(&nextPlayer,&p1,&p2);
+    alternatePlayers(&otherPlayer,&p1,&p2);
 
 }
 }
