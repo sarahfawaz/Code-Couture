@@ -260,18 +260,22 @@ void shipSunk (struct Player *p, struct Player *p1) {
     if (p->CarrierCount==0) {
         p->nbrOfShipsSunk+=1;
         p->CarrierCount=-1;
+        p->smokeCount+=1;
         printf("Congrats! You have sunk %s's Carrier!\n", p1->name);
     } else if (p->BattleshipCount==0) {
         p->nbrOfShipsSunk+=1;
         p->BattleshipCount=-1;
+        p->smokeCount+=1;
         printf("Congrats! You have sunk %s's Battleship!\n", p1->name);
     } else if (p->DestroyerCount==0) {
         p->nbrOfShipsSunk+=1;
         p->DestroyerCount=-1;
+        p->smokeCount+=1;
         printf("Congrats! You have sunk %s's Destroyer!\n", p1->name);
     } else if (p->SubmarineCount==0) {
         p->nbrOfShipsSunk+=1;
         p->SubmarineCount=-1;
+        p->smokeCount+=1;
         printf("Congrats! You have sunk %s's Submarine!\n", p1->name);
     }
 }
