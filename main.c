@@ -718,6 +718,7 @@ void main(void)
         }
 
         }
+    shipSunk(nextPlayer, otherPlayer);
     if(p1.BattleshipCount<1 && p1.CarrierCount<1 && p1.DestroyerCount<1 && p1.SubmarineCount<1){
         printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
         break;
