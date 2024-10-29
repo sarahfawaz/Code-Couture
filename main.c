@@ -23,27 +23,6 @@ struct Player {
     int SubmarineCount;
 };
 
-//returns true if ship has been sunk and false if it was not
-void shipSunk (struct Player *p, struct Player *p1) {
-    if (p->CarrierCount==0) {
-        p->nbrOfShipsSunk+=1;
-        p->CarrierCount=-1;
-        printf("Congrats! You have sunk %s's Carrier!", p1->name);
-    } else if (p->BattleshipCount==0) {
-        p->nbrOfShipsSunk+=1;
-        p->BattleshipCount=-1;
-        printf("Congrats! You have sunk %s's Battleship!", p1->name);
-    } else if (p->DestroyerCount==0) {
-        p->nbrOfShipsSunk+=1;
-        p->DestroyerCount=-1;
-        printf("Congrats! You have sunk %s's Destroyer!", p1->name);
-    } else if (p->SubmarineCount==0) {
-        p->nbrOfShipsSunk+=1;
-        p->SubmarineCount=-1;
-        printf("Congrats! You have sunk %s's Submarine!", p1->name);
-    }
-}
-
 
 // alternates players according to their turn
 void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
@@ -75,6 +54,13 @@ void initializeDisplayedGrid (struct Player *p) {
     }
 }
 
+void initializeShipGrid (struct Player *p) {
+    for (int i=0; i<p->rows; i++) {
+        for (int j=0; j<p->columns; j++) {
+            p->shipGrid[i][j]='~';
+        }
+    }
+}
 
 // prints the grid
 void printGrid (struct Player *p) {
@@ -243,14 +229,14 @@ void placeShips (struct Player *p, char orientation [], int nbrOfCells, int col,
         for (int j=col; j<(col+nbrOfCells); j++) {
             p->grid[i][j]='X';
             p->smokeGrid[i][j]='X';
-            p->shipGrid[i][j] = nbrOfCells;//each ship will have uniquely-valued cells
+            p->shipGrid[i][j] = (nbrOfCells + '0') ;//each ship will have uniquely-valued cells
         }
     } else {
         int j=col;
         for (int i=row; i<(row+nbrOfCells); i++) {
             p->grid[i][j]='X';
             p->smokeGrid[i][j]='X';
-            p->shipGrid[i][j] = nbrOfCells;
+            p->shipGrid[i][j] = (char)nbrOfCells;
         }
     }
 }
@@ -269,6 +255,27 @@ void decrementShipTypeCounter (struct Player *p, char c) {
 
 }
 
+//returns true if ship has been sunk and false if it was not
+void shipSunk (struct Player *p, struct Player *p1) {
+    if (p->CarrierCount==0) {
+        p->nbrOfShipsSunk+=1;
+        p->CarrierCount=-1;
+        printf("Congrats! You have sunk %s's Carrier!\n", p1->name);
+    } else if (p->BattleshipCount==0) {
+        p->nbrOfShipsSunk+=1;
+        p->BattleshipCount=-1;
+        printf("Congrats! You have sunk %s's Battleship!\n", p1->name);
+    } else if (p->DestroyerCount==0) {
+        p->nbrOfShipsSunk+=1;
+        p->DestroyerCount=-1;
+        printf("Congrats! You have sunk %s's Destroyer!\n", p1->name);
+    } else if (p->SubmarineCount==0) {
+        p->nbrOfShipsSunk+=1;
+        p->SubmarineCount=-1;
+        printf("Congrats! You have sunk %s's Submarine!\n", p1->name);
+    }
+}
+
 
 // will return true if it hit, false if it missed
 bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char difficultyLevel []) {
@@ -285,7 +292,10 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
             p->displayedGrid[row][col]='*'; //changes display on grid to hit in both modes
             decrementShipTypeCounter(p, p1->shipGrid[row][col]);
             return true;
-        } else return false; //if it already was missed before
+        } else {
+            printf("Already missed before\n");
+            return false; //if it already was missed before
+        }
     }
 }
 
@@ -451,6 +461,7 @@ void torpedo(struct Player *nextPlayer, struct Player *otherPlayer, char difficu
     }
 }
 
+
 void main(void)
 {
 
@@ -464,6 +475,7 @@ void main(void)
     p1.smokeCount = 0;
     initializeGrid(&p1);
     initializeDisplayedGrid(&p1);
+    initializeShipGrid(&p1);
 
 
     //initialize player 2
@@ -476,6 +488,7 @@ void main(void)
     p1.smokeCount = 0;
     initializeGrid(&p2);
     initializeDisplayedGrid(&p2);
+    initializeShipGrid(&p2);
 
 
     //asking for difficulty level
