@@ -564,7 +564,7 @@ void main(void)
 
     while (true) {
         char move[10];
-        printf("%s, What is your next move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
+        printf("%s, what is your next move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
         scanf("%s", &move);
         toLower(move);
         while ((strcmp(move, "fire")) != 0 && (strcmp(move, "radar")) != 0 && (strcmp(move, "smoke")) != 0 && (strcmp(move, "artillery")) != 0 && (strcmp(move, "torpedo")) != 0) {
