@@ -598,7 +598,7 @@ void main(void)
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
             while (!checkRadarValidity(convertToColumnIndex(location[0]), getRow(location))) {
-                printf("Invalid coordinates, please try again.\n");
+                printf("Index out of bounds, please try again.\n");
                 scanf("%s", &location);
             }
             radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
