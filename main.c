@@ -271,102 +271,16 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
 
 
 // radar looks for ships in 2x2 area
-void radar (struct Player *p, int col, int row, int position) {
-    if(position == 1){
-        if (p->smokeGrid[row][col] == 'X') {
-            printf("Enemy ships found\n");
-            return;
-        }
-        if (col < 9) {
-            if (p->smokeGrid[row][col + 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (row < 9) {
-            if (p->smokeGrid[row + 1][col] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (col < 9 && row < 9) {
-            if (p->smokeGrid[row + 1][col + 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-    }else if(position == 2){
-        if (p->smokeGrid[row][col] == 'X') {
-            printf("Enemy ships found\n");
-            return;
-        }
-        if (col > 1) {
-            if (p->smokeGrid[row][col - 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (row < 9) {
-            if (p->smokeGrid[row + 1][col] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (col > 1 && row < 9) {
-            if (p->smokeGrid[row + 1][col - 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-    }else if(position == 3){
-        if (p->smokeGrid[row][col] == 'X') {
-            printf("Enemy ships found\n");
-            return;
-        }
-        if (col < 9) {
-            if (p->smokeGrid[row][col + 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (row > 1) {
-            if (p->smokeGrid[row - 1][col] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (col < 9 && row > 1) {
-            if (p->smokeGrid[row - 1][col + 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-    }else{
-        if (p->smokeGrid[row][col] == 'X') {
-            printf("Enemy ships found\n");
-            return;
-        }
-        if (col > 1) {
-            if (p->smokeGrid[row][col - 1] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (row > 1) {
-            if (p->smokeGrid[row - 1][col] == 'X') {
-                printf("Enemy ships found\n");
-                return;
-            }
-        }
-        if (col > 1 && row > 1) {
-            if (p->smokeGrid[row - 1][col - 1] == 'X') {
-                printf("Enemy ships found\n");
+void radar (struct Player *p, int col, int row) {
+    for (int i=row; i<=row+1; i++) {
+        for (int j=col; j<=col+1; j++) {
+            if (p->grid[i][j]=='X') {
+                printf("Enemy ships found.\n");
                 return;
             }
         }
     }
-
-    printf("No enemy ships found\n");
+    printf("No enemy ships found.\n");
 }
 
 // smoke hides ships from radars in 2x2 area
@@ -675,13 +589,7 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
-            printf("In which position is your selection?\n(1)top-left\n(2)top-right\n(3)bottom-left\n(4)bottom-right\n");
-            scanf("%d", &position);
-            while(position < 1 || position > 4){
-                printf("Invalid input. In which position is your selection?\n(1)top-left\n(2)top-right\n(3)bottom-left\n(4)bottom-right\n");
-                scanf("%d", &position);
-            }
-            radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location), position);
+            radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
         }else if((strcmp(move, "smoke")) == 0){
             if(nextPlayer->smokeCount == 0){
                 printf("%s, you do not have any smokes right now. Turn skipped.\n", nextPlayer->name);
