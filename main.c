@@ -250,34 +250,34 @@ void decrementShipTypeCounter (struct Player *p, char c) {
 
 
 // will return true if it hit, false if it missed
-bool HitOrMiss (struct Player *p, char coordinates [], char difficultyLevel []) {
+bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char difficultyLevel []) {
     if (validCoordinates(coordinates)) {
         int row = getRow(coordinates);
         int col = convertToColumnIndex(coordinates[0]);
-        if (p->grid[row][col]=='~') {
+        if (p1->grid[row][col]=='~') {
             if (strcmp(difficultyLevel, "easy")==0) {
                 p->displayedGrid[row][col]='o'; //changes display on grid if missed and if in easy mode
             }
-            p->grid[row][col]='o';
+            p1->grid[row][col]='o';
             return false;
-        } else if (p->grid[row][col]=='X') {
+        } else if (p1->grid[row][col]=='X') {
             p->displayedGrid[row][col]='*'; //changes display on grid to hit in both modes
-            decrementShipTypeCounter(p, p->shipGrid[row][col]);
+            decrementShipTypeCounter(p, p1->shipGrid[row][col]);
             return true;
         } else return false; //if it already was missed before
     }
 }
 
-bool HitOrMiss (struct Player *p, int row, int col, char difficultyLevel []) {
-    if (p->grid[row][col]=='~') {
+bool HitOrMiss (struct Player *p, struct Player *p1, int row, int col, char difficultyLevel []) {
+    if (p1->grid[row][col]=='~') {
         if (strcmp(difficultyLevel, "easy")==0) {
             p->displayedGrid[row][col]='o'; //changes display on grid if missed and if in easy mode
         }
-        p->grid[row][col]='o';
+        p1->grid[row][col]='o';
         return false;
-    } else if (p->grid[row][col]=='X') {
+    } else if (p1->grid[row][col]=='X') {
         p->displayedGrid[row][col]='*'; //changes display on grid to hit in both modes
-        decrementShipTypeCounter(p, p->shipGrid[row][col]);
+        decrementShipTypeCounter(p, p1->shipGrid[row][col]);
         return true;
     } else return false; //if it already was missed before
 }
@@ -433,7 +433,7 @@ void smoke (struct Player *p, int col, int row, int position) {
 
 void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinates[], char difficultyLevel[]) {
 
-    if (HitOrMiss(otherPlayer, coordinates, difficultyLevel)) {
+    if (HitOrMiss(nextPlayer, otherPlayer, coordinates, difficultyLevel)) {
 
         printf("Hit!\n");
 
