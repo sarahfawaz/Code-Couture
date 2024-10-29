@@ -67,7 +67,7 @@ void printGrid (struct Player *p) {
     }
 }
 
-printDisplayedGrid(struct Player *p) {
+void printDisplayedGrid(struct Player *p) {
     printf("\tA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\n");
     for (int i=0; i<p->rows; i++) {
         printf("%d\t", i+1);
@@ -587,6 +587,7 @@ void main(void)
     p1.radarCount = 3;
     p1.smokeCount = 0;
     initializeGrid(&p1);
+    initializeDisplayedGrid(&p1);
 
 
     //initialize player 2
@@ -598,6 +599,7 @@ void main(void)
     p2.radarCount = 3;
     p1.smokeCount = 0;
     initializeGrid(&p2);
+    initializeDisplayedGrid(&p2);
 
 
     //asking for difficulty level
