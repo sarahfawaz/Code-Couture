@@ -17,15 +17,31 @@ struct Player
     int shipsSunk;
     int radarCount;
     int smokeCount;
-    int count5;
-    int count4;
-    int count3;
-    int count2;
+    int CarrierCount;
+    int BattleshipCount;
+    int DestroyerCount;
+    int SubmarineCount;
 };
 
-void shipSunk()
-{
-
+//returns true if ship has been sunk and false if it was not
+void shipSunk (struct Player *p, struct Player *p1) {
+    if (p->CarrierCount==0) {
+        printf("Congrats! You have sunk %s's Carrier!", p1->name);
+        p->shipsSunk+=1;
+        p->CarrierCount=-1;
+    } else if (p->BattleshipCount==0) {
+        printf("Congrats! You have sunk %s's Battleship!", p1->name);
+        p->shipsSunk+=1;
+        p->BattleshipCount=-1;
+    } else if (p->DestroyerCount==0) {
+        printf("Congrats! You have sunk %s's Destroyer!", p1->name);
+        p->shipsSunk+=1;
+        p->DestroyerCount=-1;
+    } else if (p->SubmarineCount==0) {
+        printf("Congrats! You have sunk %s's Submarine!", p1->name);
+        p->shipsSunk+=1;
+        p->SubmarineCount=-1;
+    }
 }
 
 // alternates players according to their turn
@@ -278,13 +294,13 @@ bool HitOrMiss(struct Player *p, char coordinates[], char difficultyLevel[])
         {
             p->grid[row][col] = '*'; // changes display on grid to hit in both modes
             if(p->uniqueGrid[row][col] == 5){
-                p->count5--;
+                p->CarrierCount--;
             }else if(p->uniqueGrid[row][col] == 4){
-                p->count4--;
+                p->BattleshipCount--;
             }else if(p->uniqueGrid[row][col] == 3){
-                p->count3--;
+                p->DestroyerCount--;
             }else if(p->uniqueGrid[row][col] == 2){
-                p->count2--;
+                p->SubmarineCount--;
             }
             return true;
         }
@@ -501,19 +517,7 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
     if (HitOrMiss(otherPlayer, coordinates, difficultyLevel))
     {
         printf("Hit!\n");
-        if(otherPlayer->count5 == 0){
-            printf("The Carrier has been sunk!");
-            otherPlayer->count5--;
-        }else if(otherPlayer->count4 == 0){
-            printf("The Battleship has been sunk!");
-            otherPlayer->count4--;
-        }else if(otherPlayer->count3 == 0){
-            printf("The Destroyer has been sunk!");
-            otherPlayer->count3--;
-        }else if(otherPlayer->count2 == 0){
-            printf("The Submarine has been sunk!");
-            otherPlayer->count2--;
-        }
+        shipSunk(nextPlayer, otherPlayer);
     }
     else
     {
@@ -662,10 +666,10 @@ void main(void)
     p1.shipsSunk = 0;
     p1.radarCount = 3;
     p1.smokeCount = 0;
-    p1.count5 = 5;
-    p1.count4 = 4;
-    p1.count3 = 3;
-    p1.count2 = 2;
+    p1.CarrierCount = 5;
+    p1.BattleshipCount = 4;
+    p1.DestroyerCount = 3;
+    p1.SubmarineCount = 2;
     initializeGrid(&p1);
 
     // initialize player 2
@@ -676,10 +680,10 @@ void main(void)
     p2.shipsSunk = 0;
     p2.radarCount = 3;
     p1.smokeCount = 0;
-    p2.count5 = 5;
-    p2.count4 = 4;
-    p2.count3 = 3;
-    p2.count2 = 2;
+    p2.CarrierCount = 5;
+    p2.BattleshipCount = 4;
+    p2.DestroyerCount = 3;
+    p2.SubmarineCount = 2;
     initializeGrid(&p2);
 
     // asking for difficulty level
@@ -834,8 +838,8 @@ void main(void)
             {
                 printf("Torpedo is not unlocked yet.\n");
             }
-            alternatePlayers(&nextPlayer, &p1, &p2);
-            alternatePlayers(&otherPlayer, &p1, &p2);
         }
+        alternatePlayers(&nextPlayer, &p1, &p2);
+        alternatePlayers(&otherPlayer, &p1, &p2); //alternates players after each turn
     }
 }
