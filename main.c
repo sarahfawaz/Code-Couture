@@ -21,6 +21,7 @@ struct Player {
     int BattleshipCount;
     int DestroyerCount;
     int SubmarineCount;
+    bool artilleryCheck;
 };
 
 
@@ -34,6 +35,7 @@ void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
 
 // initializes the grid
 void initializeGrid (struct Player *p) {
+    p->artilleryCheck = false;
     p->CarrierCount = 5;
     p->BattleshipCount = 4;
     p->DestroyerCount = 3;
@@ -366,21 +368,11 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
 
 }
 
-bool artilleryCheck = false;
-
-void unlockArtillery() {
-    artilleryCheck = true;
+void unlockArtillery(struct Player *p) {
+    p->artilleryCheck = true;
 }
 
-void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]) {
-    if (!artilleryCheck) {
-        printf("Artillery is still locked.\n");
-        return;
-    }
-
-    int row = getRow(coordinates);
-
-    int col = convertToColumnIndex(coordinates[0]);
+void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], int row, int col) {
 
     char cellCoordinates[4];
 
@@ -417,7 +409,7 @@ void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char diffi
 
     fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
 
-    artilleryCheck = false;
+    nextPlayer->artilleryCheck = false;
 }
 
 
@@ -593,7 +585,7 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
-            while (!checkRadarValidity(convertToColumnIndex(location[0]), getRow(location)) || !validCoordinates(location)) {
+            while (!checkRadarValidity(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
                 printf("Please try again.\n");
                 scanf("%s", &location);
             }
@@ -608,18 +600,22 @@ void main(void)
             nextPlayer->smokeCount--;
             printf("Where would you like to activate your smoke? ");
             scanf("%s", &location);
-            while (!checkSmokeValidity(convertToColumnIndex(location[0]), getRow(location)) || !validCoordinates(location)) {
+            while (!checkSmokeValidity(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
                 printf("Please try again.\n");
                 scanf("%s", &location);
             }
             smoke(nextPlayer, convertToColumnIndex(location[0]), getRow(location));
             printSmokeGrid(nextPlayer);
         }else if((strcmp(move, "artillery")) == 0){
-            if (artilleryCheck) {
+            if (nextPlayer->artilleryCheck) {
             printf("Enter top-left coordinates for artillery (e.g., B3): ");
             scanf("%s", coordinates);
-            artillery(nextPlayer, otherPlayer, difficultyLevel, coordinates);
-        } else {
+                while (!validCoordinates(coordinates)) {
+                    printf("Please try again.\n");
+                    scanf("%s", coordinates);
+                }
+            artillery(nextPlayer, otherPlayer, difficultyLevel, getRow(location), convertToColumnIndex(location[0]));
+            } else {
             printf("Artillery is not unlocked yet.\n");
         }
         }else{
