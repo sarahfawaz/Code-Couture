@@ -22,6 +22,10 @@ struct Player {
     int DestroyerCount;
     int SubmarineCount;
     bool unlockedArtillery;
+    bool unlockedTorpedo;
+    int turnCount;
+    int artilleryMove;
+    int torpedoMove;
 };
 
 
@@ -35,7 +39,11 @@ void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
 
 // initializes the grid
 void initializeGrid (struct Player *p) {
+    p->turnCount = 0;
+    p->artilleryMove = 0;
+    p->torpedoMove = 0;
     p->unlockedArtillery = true;
+    p->unlockedTorpedo = true;
     p->CarrierCount = 5;
     p->BattleshipCount = 4;
     p->DestroyerCount = 3;
@@ -313,23 +321,6 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
     }
 }
 
-bool HitOrMiss2 (struct Player *p, struct Player *p1,  int row, int col, char difficultyLevel []) {
-    if (p1->grid[row][col]=='~') {
-        if (strcmp(difficultyLevel, "easy")==0) {
-            p->displayedGrid[row][col]='o'; //changes display on grid if missed and if in easy mode
-        }
-        p1->grid[row][col]='o';
-        return false;
-    } else if (p1->grid[row][col]=='X') {
-        p->displayedGrid[row][col]='*'; //changes display on grid to hit in both modes
-        decrementShipTypeCounter(p, p1->shipGrid[row][col]);
-        return true;
-    } else {
-        printf("Already missed before\n");
-        return false; //if it already was missed before
-    }
-}
-
 
 
 // radar looks for ships in 2x2 area
@@ -373,76 +364,86 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
 
 }
 
-void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], int row, int col) {
-
-    for (int i=row; i<=row+1; i++ ) {
-        for (int j=col; j<=col+1; j++) {
-            if (HitOrMiss2(nextPlayer, otherPlayer, i, j, difficultyLevel)) {
-                printf("Hit!\n");
-            } else {
-                printf("Miss!\n");
-            }
-            printDisplayedGrid(nextPlayer);
-        }
+char* nextCoordinates1 (char coordinates[]) {
+    char *c = malloc(4 * sizeof(char));
+    c[0] = coordinates[0] + 1;
+    if (coordinates[1]=='1' && coordinates [2]=='0' && coordinates [3] == '\0') {
+        c[1] = '1';
+        c[2] = '0';
+        c[3] = '\0';
+    } else {
+        c[1] = coordinates[1];
+        c[2] = '\0';
     }
+    return c;
+}
 
+char* nextCoordinates2 (char coordinates[]) {
+    char *c = malloc(4 * sizeof(char));
+    c[0] = coordinates[0];
+    if (coordinates[1]=='9') {
+        c[1] = '1';
+        c[2] = '0';
+        c[3] = '\0';
+    } else {
+        c[1]=coordinates[1]+1;
+        c[2] = '\0';
+    }
+    return c;
+}
+
+void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]) {
+
+    fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
+    fire(nextPlayer, otherPlayer, nextCoordinates1(coordinates), difficultyLevel);
+    fire(nextPlayer, otherPlayer, nextCoordinates2(coordinates), difficultyLevel);
+    fire(nextPlayer, otherPlayer, nextCoordinates1(nextCoordinates2(coordinates)), difficultyLevel);
     nextPlayer->unlockedArtillery = false;
 
 }
 
-
-bool torpedoCheck = false;
-void unlockTorpedo() {
-    torpedoCheck = true;
-}
-
-void torpedo(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]) {
-    if (!torpedoCheck) {
-        printf("Torpedo is still locked.\n");
-        return;
-    }
-
-    torpedoCheck = false;
-
-    char cellCoordinates[4];
-
-    if (coordinates[0] >= 'A' && coordinates[0] <= 'J') {
-
-        int col = convertToColumnIndex(coordinates[0]);
-
-        for (int row = 0; row < otherPlayer->rows; row++) {
-            cellCoordinates[0] = 'A' + col;
-            if (row + 1 >= 10) {
-                cellCoordinates[1] = '1';
-                cellCoordinates[2] = '0' + (row - 9);
-                cellCoordinates[3] = '\0';
-            } else {
-                cellCoordinates[1] = '1' + row;
-                cellCoordinates[2] = '\0';
-            }
-            fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
-        }
+void torpedoRow (struct Player *nextPlayer, struct Player *otherPlayer, char row [], char difficultyLevel []) {
+    char coordinates [4];
+    if (strcasecmp(row, "1") == 0) {
+        strcpy(coordinates, "A1");
+    } else if (strcasecmp(row, "2") == 0) {
+        strcpy(coordinates, "A2");
+    } else if (strcasecmp(row, "3") == 0) {
+        strcpy(coordinates, "A3");
+    } else if (strcasecmp(row, "4") == 0) {
+        strcpy(coordinates, "A4");
+    } else if (strcasecmp(row, "5") == 0) {
+        strcpy(coordinates, "A5");
+    } else if (strcasecmp(row, "6") == 0) {
+        strcpy(coordinates, "A6");
+    } else if (strcasecmp(row, "7") == 0) {
+        strcpy(coordinates, "A7");
+    } else if (strcasecmp(row, "8") == 0) {
+        strcpy(coordinates, "A8");
+    } else if (strcasecmp(row, "9") == 0) {
+        strcpy(coordinates, "A9");
     } else {
-
-        int row = getRow(coordinates);
-
-        for (int col = 0; col < otherPlayer->columns; col++) {
-
-            cellCoordinates[0] = 'A' + col;
-
-            if (row + 1 >= 10) {
-                cellCoordinates[1] = '1';
-                cellCoordinates[2] = '0' + (row - 9);
-                cellCoordinates[3] = '\0';
-            } else {
-                cellCoordinates[1] = '1' + row;
-                cellCoordinates[2] = '\0';
-            }
-            fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
-        }
+        strcpy(coordinates, "A10");
     }
+
+    for (int i=1; i<=10; i++) {
+        fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
+        strcpy(coordinates, nextCoordinates1(coordinates));
+    }
+    nextPlayer->unlockedTorpedo = false;
 }
 
+void torpedoColumn (struct Player *nextPlayer, struct Player *otherPlayer, char col [], char difficultyLevel []) {
+    char *coordinates = malloc(3 * sizeof(char));
+    coordinates [0] = col[0];
+    coordinates [1] = '1';
+    coordinates [2] = '\0';
+    for (int i=1; i<=10; i++) {
+        fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
+        strcpy(coordinates, nextCoordinates2(coordinates));
+    }
+    nextPlayer->unlockedTorpedo = false;
+}
 
 void main(void)
 {
@@ -530,10 +531,17 @@ void main(void)
         }
         nextPlayer->placedShips = true;
         alternatePlayers(&nextPlayer,&p1,&p2);
-        system("clear");
+        system("clear");  //clears terminal on mac
     }
 
     while (true) {
+        nextPlayer->turnCount +=1;
+        if ((nextPlayer->artilleryMove>0)&&(nextPlayer->artilleryMove<nextPlayer->turnCount)) {
+            nextPlayer->unlockedArtillery = false;
+        }
+        if ((nextPlayer->torpedoMove>0)&&(nextPlayer->torpedoMove<nextPlayer->turnCount)) {
+            nextPlayer->unlockedTorpedo = false;
+        }
         char move[10];
         printf("%s, what is your next move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
         scanf("%s", &move);
@@ -548,11 +556,9 @@ void main(void)
         if((strcmp(move, "fire")) == 0){
             printf("Enter coordinates to fire (e.g., B3): ");
             scanf("%s", coordinates);
-            while (!validCoordinates(coordinates)) {
-                printf("Please try again.\n");
-                scanf("%s", coordinates);
-            }
-            fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
+            if (!validCoordinates(coordinates)) {
+                printf("Turn skipped.\n");
+            } else fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
         }else if((strcmp(move, "radar")) == 0){
             if(nextPlayer->radarCount == 0){
                 printf("%s, you do not have any more radars. Turn skipped.\n", nextPlayer->name);
@@ -563,12 +569,10 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
-            while (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
-                printf("Please try again.\n");
-                scanf("%s", &location);
-            }
-            radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
-        }else if((strcmp(move, "smoke")) == 0){
+            if (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+                printf("Turn skipped.\n");
+            } else radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
+        }else if((strcmp(move, "smoke")) == 0) {
             if(nextPlayer->smokeCount == 0){
                 printf("%s, you do not have the option to use the smoke move right now.\nIt can be used each time an opponent's ship is sunk.\nTurn skipped.\n", nextPlayer->name);
                 alternatePlayers(&nextPlayer,&p1,&p2);
@@ -578,33 +582,43 @@ void main(void)
             nextPlayer->smokeCount--;
             printf("Where would you like to activate your smoke? ");
             scanf("%s", &location);
-            while (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
-                printf("Please try again.\n");
-                scanf("%s", &location);
+            if (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+                printf("Turn skipped.\n");
+            } else {
+                smoke(nextPlayer, convertToColumnIndex(location[0]), getRow(location));
+                printSmokeGrid(nextPlayer);
+                system("clear"); //clears terminal on mac
             }
-            smoke(nextPlayer, convertToColumnIndex(location[0]), getRow(location));
-            printSmokeGrid(nextPlayer);
         }else if((strcmp(move, "artillery")) == 0){
             if (nextPlayer->nbrOfShipsSunk==1 && nextPlayer->unlockedArtillery) {
             printf("Enter top-left coordinates for artillery (e.g., B3): ");
             scanf("%s", coordinates);
-                while (!validCoordinates(coordinates) || !checkInBounds(getRow(location), convertToColumnIndex(location[0]))) {
+                while (!validCoordinates(coordinates) || !checkInBounds(getRow(coordinates), convertToColumnIndex(coordinates[0]))) {
                     printf("Please try again.\n");
                     scanf("%s", coordinates);
                 }
-            artillery(nextPlayer, otherPlayer, difficultyLevel, getRow(location), convertToColumnIndex(location[0]));
+            artillery(nextPlayer, otherPlayer, difficultyLevel, coordinates);
             } else {
-            printf("Artillery is not unlocked yet.\n");
+            if (nextPlayer->nbrOfShipsSunk==0) {
+                printf("Artillery move is not unlocked yet.\n");
+            } else printf("Artillery move is not available anymore.\n");
         }
         }else{
-            if (torpedoCheck) {
-            printf("Enter row or column for torpedo attack (e.g., B for column or 3 for row): ");
-            scanf("%s", coordinates);
-            torpedo(nextPlayer, otherPlayer, difficultyLevel, coordinates);
-        } else {
-            printf("Torpedo is not unlocked yet.\n");
-        }
-
+            char rOc [3];
+            if (nextPlayer->nbrOfShipsSunk==3 && nextPlayer->unlockedTorpedo) {
+                printf("Enter row/column of torpedo: ");
+                scanf("%s", rOc);
+                toLower(rOc);
+                if (rOc[0]>='a'&& rOc[0]<='j' && rOc[1]=='\0') {
+                    torpedoColumn(nextPlayer, otherPlayer, rOc, difficultyLevel);
+                } else if (((rOc[0] >= '1' && rOc[0] <= '9' && rOc[1]=='\0') || (rOc[0]=='1' && rOc[1]=='0' && rOc[2]=='\0'))){
+                    torpedoRow(nextPlayer, otherPlayer, rOc, difficultyLevel);
+                }
+            } else {
+                if (nextPlayer->nbrOfShipsSunk<3) {
+                    printf("Torpedo move is not unlocked yet.\n");
+                } else printf("Torpedo move is not available anymore.\n");
+            }
         }
     shipSunk(nextPlayer, otherPlayer);
     if(p1.BattleshipCount<1 && p1.CarrierCount<1 && p1.DestroyerCount<1 && p1.SubmarineCount<1){
@@ -615,6 +629,13 @@ void main(void)
         printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
         break;
     }
+        if (nextPlayer->artilleryMove==0 && nextPlayer->nbrOfShipsSunk==1) {
+            nextPlayer->artilleryMove = (nextPlayer->turnCount)+1;
+        }
+        if (nextPlayer->torpedoMove==0 && nextPlayer->nbrOfShipsSunk==3) {
+            nextPlayer->torpedoMove = (nextPlayer->turnCount)+1;
+        }
+
     alternatePlayers(&nextPlayer,&p1,&p2);
     alternatePlayers(&otherPlayer,&p1,&p2);
 
