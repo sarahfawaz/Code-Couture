@@ -313,6 +313,23 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
     }
 }
 
+bool HitOrMiss2 (struct Player *p, struct Player *p1,  int row, int col, char difficultyLevel []) {
+    if (p1->grid[row][col]=='~') {
+        if (strcmp(difficultyLevel, "easy")==0) {
+            p->displayedGrid[row][col]='o'; //changes display on grid if missed and if in easy mode
+        }
+        p1->grid[row][col]='o';
+        return false;
+    } else if (p1->grid[row][col]=='X') {
+        p->displayedGrid[row][col]='*'; //changes display on grid to hit in both modes
+        decrementShipTypeCounter(p, p1->shipGrid[row][col]);
+        return true;
+    } else {
+        printf("Already missed before\n");
+        return false; //if it already was missed before
+    }
+}
+
 
 
 // radar looks for ships in 2x2 area
@@ -348,55 +365,26 @@ void smoke (struct Player *p, int col, int row) {
 void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinates[], char difficultyLevel[]) {
 
     if (HitOrMiss(nextPlayer, otherPlayer, coordinates, difficultyLevel)) {
-
         printf("Hit!\n");
-
     } else {
-
         printf("Miss!\n");
-
     }
-
     printDisplayedGrid(nextPlayer);
 
 }
 
 void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], int row, int col) {
 
-    char cellCoordinates[4];
-
-    cellCoordinates[0] = 'A' + col;
-
-    if (row + 1 >= 10) {
-        cellCoordinates[1] = '1';
-        cellCoordinates[2] = '0' + (row - 9);
-        cellCoordinates[3] = '\0';
-    } else {
-        cellCoordinates[1] = '1' + row;
-        cellCoordinates[2] = '\0';
+    for (int i=row; i<=row+1; i++ ) {
+        for (int j=col; j<=col+1; j++) {
+            if (HitOrMiss2(nextPlayer, otherPlayer, i, j, difficultyLevel)) {
+                printf("Hit!\n");
+            } else {
+                printf("Miss!\n");
+            }
+            printDisplayedGrid(nextPlayer);
+        }
     }
-    fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
-
-    cellCoordinates[0] = 'A' + col + 1;
-
-    fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
-
-    cellCoordinates[0] = 'A' + col;
-
-    if (row + 2 >= 10) {
-        cellCoordinates[1] = '1';
-        cellCoordinates[2] = '0' + (row - 9 + 1);
-        cellCoordinates[3] = '\0';
-    } else {
-        cellCoordinates[1] = '1' + row + 1;
-        cellCoordinates[2] = '\0';
-    }
-
-    fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
-
-    cellCoordinates[0] = 'A' + col + 1;
-
-    fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
 
     nextPlayer->unlockedArtillery = false;
 
