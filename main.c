@@ -72,14 +72,6 @@ void initializeShipGrid (struct Player *p) {
     }
 }
 
-void initializeSmokeGrid (struct Player *p) {
-    for (int i=0; i<p->rows; i++) {
-        for (int j=0; j<p->columns; j++) {
-            p->shipGrid[i][j]='~';
-        }
-    }
-}
-
 // prints the grid
 void printGrid (struct Player *p) {
     printf("\tA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\n");
@@ -254,7 +246,7 @@ void placeShips (struct Player *p, char orientation [], int nbrOfCells, int col,
         for (int i=row; i<(row+nbrOfCells); i++) {
             p->grid[i][j]='X';
             p->smokeGrid[i][j]='X';
-            p->shipGrid[i][j] = (char)nbrOfCells;
+            p->shipGrid[i][j] = (nbrOfCells + '0');
         }
     }
 }
