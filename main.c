@@ -477,6 +477,7 @@ void main(void)
     p1.nbrOfShipsSunk = 0;
     p1.radarCount = 3;
     p1.smokeCount = 0;
+    p1.artilleryCheck = false;
     initializeGrid(&p1);
     initializeDisplayedGrid(&p1);
     initializeShipGrid(&p1);
@@ -489,7 +490,8 @@ void main(void)
     p2.placedShips = false;
     p2.nbrOfShipsSunk = 0;
     p2.radarCount = 3;
-    p1.smokeCount = 0;
+    p2.smokeCount = 0;
+    p2.artilleryCheck = false;
     initializeGrid(&p2);
     initializeDisplayedGrid(&p2);
     initializeShipGrid(&p2);
