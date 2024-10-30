@@ -21,7 +21,7 @@ struct Player {
     int BattleshipCount;
     int DestroyerCount;
     int SubmarineCount;
-    bool artilleryCheck;
+    bool unlockedArtillery;
 };
 
 
@@ -35,7 +35,7 @@ void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
 
 // initializes the grid
 void initializeGrid (struct Player *p) {
-    p->artilleryCheck = false;
+    p->unlockedArtillery = true;
     p->CarrierCount = 5;
     p->BattleshipCount = 4;
     p->DestroyerCount = 3;
@@ -328,7 +328,7 @@ void radar (struct Player *p, int col, int row) {
     printf("No enemy ships found.\n");
 }
 
-bool checkRadarValidity (int row, int col) {
+bool checkInBounds (int row, int col) {
     if (row==9 || col==9) {
         printf("Index out of bounds.\n");
         return false;
@@ -345,13 +345,6 @@ void smoke (struct Player *p, int col, int row) {
     }
 }
 
-bool checkSmokeValidity (int row, int col) {
-    if (row==9 || col==9) {
-        printf("Index out of bounds.\n");
-        return false;
-    } else return true;
-}
-
 void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinates[], char difficultyLevel[]) {
 
     if (HitOrMiss(nextPlayer, otherPlayer, coordinates, difficultyLevel)) {
@@ -366,10 +359,6 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
 
     printDisplayedGrid(nextPlayer);
 
-}
-
-void unlockArtillery(struct Player *p) {
-    p->artilleryCheck = true;
 }
 
 void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], int row, int col) {
@@ -409,7 +398,8 @@ void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char diffi
 
     fire(nextPlayer, otherPlayer, cellCoordinates, difficultyLevel);
 
-    nextPlayer->artilleryCheck = false;
+    nextPlayer->unlockedArtillery = false;
+
 }
 
 
@@ -477,7 +467,6 @@ void main(void)
     p1.nbrOfShipsSunk = 0;
     p1.radarCount = 3;
     p1.smokeCount = 0;
-    p1.artilleryCheck = false;
     initializeGrid(&p1);
     initializeDisplayedGrid(&p1);
     initializeShipGrid(&p1);
@@ -490,8 +479,7 @@ void main(void)
     p2.placedShips = false;
     p2.nbrOfShipsSunk = 0;
     p2.radarCount = 3;
-    p2.smokeCount = 0;
-    p2.artilleryCheck = false;
+    p1.smokeCount = 0;
     initializeGrid(&p2);
     initializeDisplayedGrid(&p2);
     initializeShipGrid(&p2);
@@ -587,7 +575,7 @@ void main(void)
             nextPlayer->radarCount--;
             printf("Where would you like to activate your radar?\n");
             scanf("%s", &location);
-            while (!checkRadarValidity(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+            while (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
                 printf("Please try again.\n");
                 scanf("%s", &location);
             }
@@ -602,17 +590,17 @@ void main(void)
             nextPlayer->smokeCount--;
             printf("Where would you like to activate your smoke? ");
             scanf("%s", &location);
-            while (!checkSmokeValidity(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+            while (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
                 printf("Please try again.\n");
                 scanf("%s", &location);
             }
             smoke(nextPlayer, convertToColumnIndex(location[0]), getRow(location));
             printSmokeGrid(nextPlayer);
         }else if((strcmp(move, "artillery")) == 0){
-            if (nextPlayer->artilleryCheck) {
+            if (nextPlayer->nbrOfShipsSunk==1 && nextPlayer->unlockedArtillery) {
             printf("Enter top-left coordinates for artillery (e.g., B3): ");
             scanf("%s", coordinates);
-                while (!validCoordinates(coordinates)) {
+                while (!validCoordinates(coordinates) || !checkInBounds(getRow(location), convertToColumnIndex(location[0]))) {
                     printf("Please try again.\n");
                     scanf("%s", coordinates);
                 }
