@@ -129,7 +129,49 @@ void calculateProbability (struct Player* bot) {
     }
 }
 
-
+// calculates the probability of each cell of being part of a ship (this is used in the smokeBot sequence)
+void calculateProbabilityPlayer (struct Player* player) {
+    int p = 0;
+    for (int i=0; i<10; i++) {
+        for (int j=0; j<10; j++) {
+            if (player->displayedGrid [i][j] == '~') {
+                for (int k=1; k<5; k++) {
+                    if (j+k>9) {
+                        break;
+                    }
+                    if (player->displayedGrid[i][j+k]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (i+k>9) {
+                        break;
+                    }
+                    if (player->displayedGrid[i+k][j]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (j-k<0) {
+                        break;
+                    }
+                    if (player->displayedGrid[i][j-k]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (i-k<0) {
+                        break;
+                    }
+                    if (player->displayedGrid[i-k][j]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                player->probability [i][j] = p;
+            }
+        }
+    }
+}
 // bot's coordinates similar format as the user's input (character array having letter representing column then row)
 char* botCoordinates (int row, int column) {
     char *c= malloc(3 * sizeof(char));
@@ -175,6 +217,39 @@ char* findMaxProbability (struct Player* bot) {
     return coordinates;
 }
 
+// finds the max probability in the player's probability grid
+char* findMaxProbabilityPlayer (struct Player* player) {
+    char maxNums[100];
+    for(int i = 0; i < 100; i++){
+        maxNums[i] = -1;
+    }
+    int index = 0;
+    int max;
+    char* coordinates = (char*)malloc(4 * sizeof(char));
+    for (int i=0; i<10; i++) {
+        for (int k=0; k<10; k++) {
+            if (player->probability[i][k]>max) {
+                max = player->probability[i][k];
+            }
+        }
+    }
+    for (int i=0; i<10; i++) {
+        for (int k=0; k<10; k++) {
+            if (player->probability[i][k]==max) {
+                maxNums[index] = i;
+                maxNums[index+1] = k;
+                index+=2;
+            }
+        }
+    }
+    srand(time(NULL));
+    int randomIndex = rand() % 99;
+    while(randomIndex % 2 != 0 || maxNums[randomIndex] == -1){
+        int randomIndex = rand() % 99;
+    }
+    strcpy(coordinates, botCoordinates(randomIndex, randomIndex + 1));
+    return coordinates;
+}
 
 // converts index of column to corresponding letter on the grid
 char convertToLetter (int c) {
@@ -1017,6 +1092,68 @@ void botRadarMove(struct Player* bot, struct Player* opponent, int difficulty)
         printf("No enemy ships found.\n");
 }
 
+// bot version of smoke function
+void smokeBot (struct Player *bot, struct Player *p, char difficultyLevel[]) {
+    int minKnownCells;
+    if(strcmp(difficultyLevel, "easy")){ //smokes at least one ship-containing cell
+        minKnownCells = 1;
+        srand(time(NULL));
+        int row = rand() % 10;
+        int col = rand() % 10;
+        while (!smokeCheck(bot, row, col, minKnownCells)) {
+            row = rand() % 10;
+            col = rand() % 10;
+        }
+        for (int i=row; i<=row+1; i++) {
+            for (int j=col; j<=col+1; j++) {
+                bot->smokeGrid[i][j] = '~';
+            }
+        }
+    }else if(strcmp(difficultyLevel, "medium")){ //smokes first ship containing cell encountered (guarantees two cells)
+        minKnownCells = 2;
+        for (int i=0; i<=9; i++) {
+            for (int j=0; j<=9; j++) {
+                if(smokeCheck(bot, i, j, minKnownCells)){
+                    for (int row=i; row<=i+1; row++) {
+                        for (int col=j; col<=j+1; col++) {
+                            bot->smokeGrid[row][col] = '~';
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }else if(strcmp(difficultyLevel, "hard")){ //smokes most likely cell to be shot by the players (also guarantees two cells)
+        minKnownCells = 2;
+        char coordinates [] = findMaxProbabilityPlayer(p);
+        while (!smokeCheck(bot, getRow(coordinates), convertToColumnIndex(coordinates), minKnownCells)) {
+            strcpy(coordinates, findMaxProbabilityPlayer(p));
+        }
+        int row = getRow(coordinates);
+        int col = convertToColumnIndex(coordinates[0]);
+        for (int i=row; i<=row+1; i++) {
+            for (int j=col; j<=col+1; j++) {
+                bot->smokeGrid[i][j] = '~';
+            }
+        }
+    }
+}
+
+// checks if the 2x2 area chosen for the bot's smoke move at random has a specific amount of cells that contain a ship
+bool smokeCheck (struct Player *bot, int row, int col, int minUnknownCells) {
+    int shipCellCounter = 0;
+    for (int j=col; j<col+2; j++) {
+        if (bot->smokeGrid[row][j]=='X') {
+            shipCellCounter+=1;
+        }
+        if (bot->smokeGrid[row+1][j]=='X'){
+            shipCellCounter+=1;
+        }
+    }
+    if (shipCellCounter>=minUnknownCells) {
+        return true;
+    } else return false;
+}
 
 // chooses the bot's next move
 void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
