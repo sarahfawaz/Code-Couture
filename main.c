@@ -932,6 +932,90 @@ int leastInfo (struct Player* bot, int o) {
        return c;
    }
 }
+// helper method designed to help us know how many unknown cells are around a 2x2 radar area
+// it will be helpful for us in the diffulty levels for the botRadarMove
+int countUnknownCells(int rows, int columns, char displayedGrid[10][10], int row, int column)
+{
+    int unknownCount=0;
+    // loop to iterate over a 4x4 grid thats around the 2x2 radar area
+    for(int i=row-1; i<=row+2; i++){
+        for(int j=column-1; j<=column+2; j++){
+            // its going to check if the cell is unknown(~) and within the bounds
+            if(i>=0 && i<rows && j>=0 && j<columns && displayedGrid[i][j]=='~'){
+                unknownCount++;
+            }
+        }
+    }
+    return unknownCount;
+}
+// bot radar move
+void botRadarMove(struct Player* bot, struct Player* opponent, int difficulty)
+{
+    // to check if radar still has any radar moves left
+    if(bot->radarCount >= 3)
+    {
+        printf("Bot reached maximum radar moves allowed.\n");
+        return;
+    }
+    int x=0, y=0;
+    bool found=false;
+
+    // easy difficulty : random radar with at least 1 unknown surrounding cell
+    if(difficulty==1)
+    {
+        do{
+            x = rand() % (bot->rows -1);
+            y = rand() % (bot->columns -1);
+        }
+        while(countUnknownCells(bot->rows, bot->columns, bot->displayedGrid, x, y)<1);
+    }
+    // medium difficulty : radar near a previous hit with at least 2 unknown surrounding cells
+    else if(difficulty==2)
+    {
+        if(bot->prevHit[0] != '\0') // check if there was a previous hit, if there was : calculate the coordinates based on that hit
+        {
+            x=bot->prevHit[0]-'A'; //converts row char to index
+            y=bot->prevHit[1]-'0'; //converts column char to int
+            if(x>0){x=x-1;} //moves up by 1 row only if its not the first row
+            if(y>0){y=y-1;} //moves left by 1 column only if its not the first column
+        }
+    }
+    // hard difficulty : radar in a high probability area with at least 3 unknown surrounding cells
+    else if (difficulty==3)
+    {
+        calculateProbability(bot);
+        int maxProbabilty=0; //keeps track of the highest probability in the grid
+        for(int i=0; i<bot->rows-1; i++){
+            for(int j=0; j<bot->columns-1; j++){
+                if(bot->probability[i][j] > maxProbabilty && countUnknownCells(bot->rows, bot->columns, bot->displayedGrid, i, j)>=3)
+                {
+                    maxProbabilty= bot->probability[i][j]; //update maxprobability to the current cell probability
+                    x=i, y=j; //store the coordinates in x and y
+                }
+            }
+        }
+    }
+    else{
+       printf("Please enter a valid difficult level. \n");
+       return;
+    }
+    //radar move code
+    for(int i=x; i<x+2 && i<bot->rows; i++){
+        for(int j=y; j<y+2 && j<bot->columns; j++){
+            if(opponent->grid[i][j]=='X')
+            {
+                found=true; 
+                break;
+            }
+        }
+    }
+    bot->radarCount++; //update the nb of radar moves used by the bot
+
+    if(found)
+        printf("Enemy ships found.\n");
+    else
+        printf("No enemy ships found.\n");
+}
 
 
 // chooses the bot's next move
