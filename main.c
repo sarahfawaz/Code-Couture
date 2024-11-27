@@ -1196,6 +1196,40 @@ void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
         randomFire(bot, p, difficultyLevel);
     } else fireAdjacency(bot, p, difficultyLevel);
 
+    //for radar move
+    if(bot->radarCount <= 3) //checks if bot still has radar moves
+    {
+        int row = rand() % 10;
+        int column = rand() % 10;
+
+        //if difficulty selected is EASY:
+        if(strcmp(difficultyLevel, "easy")==0)
+        {
+            if(countUnknownCells(bot, row, column) >=1) //at least one cell should be unknown
+            {
+                radar(bot, row, column);
+                bot->radarCount++; //increment radar count
+            }
+        }
+        //if difficulty selected is MEDIUM:
+        else if(strcmp(difficultyLevel, "medium")==0)
+        {
+            if(countUnknownCells(bot, row, column) >=2) //at least 2 unknown cells 
+            {
+                radar(bot, row, column);
+                bot->radarCount++;
+            }
+        }
+        //if difficulty selected is HARD:
+        else if(strcmp(difficultyLevel, "hard")==0)
+        {
+            if(countUnknownCells(bot, row, column) >=3) //at least 3 unknown cells
+            {
+                radar(bot, row, column);
+                bot->radarCount++;
+            }
+        }
+
 }
 
 
