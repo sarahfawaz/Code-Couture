@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdbool.h>
 
+
 // attributes of each player
 struct Player {
     char name[20];
@@ -26,19 +27,28 @@ struct Player {
     int turnCount;
     int artilleryMove;
     int torpedoMove;
+    bool bot;
+    int probability [10][10];
+    char* checkeredGrid [50];
+    char prevHit [4];
+    int adjacencyCounter;
+    char* nextHit [18];
+    bool isRandom;
+    char saveMisses [10][10];
 };
 
 
-// alternates players according to their turn
-void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
-    if (*p == p1) {
-        *p = p2;
-    } else *p = p1;
+// initializes nextHit array
+void initializeNextHit (struct Player* bot) {
+    for (int i=0; i<17; i++) {
+        bot->nextHit [i] = "";
+    }
+    bot->nextHit [17] = "\0";
 }
 
 
-// initializes the grid
-void initializeGrid (struct Player *p) {
+// initializes everything needed
+void initialize (struct Player* p) {
     p->turnCount = 0;
     p->artilleryMove = 0;
     p->torpedoMove = 0;
@@ -48,29 +58,274 @@ void initializeGrid (struct Player *p) {
     p->BattleshipCount = 4;
     p->DestroyerCount = 3;
     p->SubmarineCount = 2;
+    p->rows = 10;
+    p->columns = 10;
+    p->placedShips = false; //did not place ships yet
+    p->nbrOfShipsSunk = 0;
+    p->radarCount = 3;
+    p->smokeCount = 0;
     for (int i=0; i<p->rows; i++) {
         for (int j=0; j<p->columns; j++) {
             p->grid[i][j]='~';
             p->smokeGrid[i][j]='~';
-        }
-    }
-}
-
-void initializeDisplayedGrid (struct Player *p) {
-    for (int i=0; i<p->rows; i++) {
-        for (int j=0; j<p->columns; j++) {
             p->displayedGrid[i][j]='~';
+            p->shipGrid[i][j]='~';
+            if (p->bot==true) {
+                p->checkeredGrid[i][j]='~';
+                p->probability [i][j] = 0;
+                p->saveMisses [i][j] = '~';
+            }
+        }
+    }
+    if (p->bot==true) {
+        p->isRandom = true;
+        strcpy(p->prevHit, "");
+        initializeNextHit(p->nextHit);
+    }
+}
+
+
+// calculates the probability of each cell of being part of a ship
+void calculateProbability (struct Player* bot) {
+    int p = 0;
+    for (int i=0; i<10; i++) {
+        for (int j=0; j<10; j++) {
+            if (bot->displayedGrid [i][j] == '~') {
+                for (int k=1; k<5; k++) {
+                    if (j+k>9) {
+                        break;
+                    }
+                    if (bot->displayedGrid[i][j+k]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (i+k>9) {
+                        break;
+                    }
+                    if (bot->displayedGrid[i+k][j]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (j-k<0) {
+                        break;
+                    }
+                    if (bot->displayedGrid[i][j-k]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                for (int k=1; k<5; k++) {
+                    if (i-k<0) {
+                        break;
+                    }
+                    if (bot->displayedGrid[i-k][j]=='~') {
+                        p += 1;
+                    } else break;
+                }
+                bot->probability [i][j] = p;
+            }
         }
     }
 }
 
-void initializeShipGrid (struct Player *p) {
-    for (int i=0; i<p->rows; i++) {
-        for (int j=0; j<p->columns; j++) {
-            p->shipGrid[i][j]='~';
+
+// bot's coordinates similar format as the user's input (character array having letter representing column then row)
+char* botCoordinates (int row, int column) {
+    char *c= malloc(3 * sizeof(char));
+    if (column==0) {
+        c[0] = 'A';
+    } else if (column==1) {
+        c[0] = 'B';
+    } else if (column==2) {
+        c[0] = 'C';
+    } else if (column==3) {
+        c[0] = 'D';
+    } else if (column==4) {
+        c[0] = 'E';
+    } else if (column==5) {
+        c[0] = 'F';
+    } else if (column==6) {
+        c[0] = 'G';
+    } else if (column==7) {
+        c[0] = 'H';
+    } else if (column==8) {
+        c[0] = 'I';
+    } else c[0] = 'J';
+    if (row==10) {
+        c[1] = '1';
+        c[2] = '0';
+    } else c[1] = row + '0';
+    return c;
+}
+
+
+// finds the max probability in the bot's probability grid
+char* findMaxProbability (struct Player* bot) {
+    int max;
+    char* coordinates = (char*)malloc(4 * sizeof(char));
+    for (int i=0; i<10; i++) {
+        for (int k=0; k<10; k++) {
+            if (bot->probability[i][k]>max) {
+                max = bot->probability[i][k];
+                strcpy(coordinates, botCoordinates(i, k));
+            }
+        }
+    }
+    return coordinates;
+}
+
+
+// converts index of column to corresponding letter on the grid
+char convertToLetter (int c) {
+    char l;
+    if (c==0) {
+        l = 'A';
+    } else if (c==1) {
+        l = 'B';
+    } else if (c==2) {
+        l = 'C';
+    } else if (c==3) {
+        l = 'D';
+    } else if (c==4) {
+        l = 'E';
+    } else if (c==5) {
+        l = 'F';
+    } else if (c==6) {
+        l = 'G';
+    } else if (c==7) {
+        l = 'H';
+    } else if (c==8) {
+        l = 'I';
+    } else l = 'J';
+    return l;
+}
+
+
+// checkered grid for considering Carrier was the last ship
+void carrierCheckeredGrid (struct Player* bot) {
+    int counter = 0;
+    int index = 5;
+    for (int i=0; i<10; i++) {
+        int j = index%5;
+        for ( ; j<10; j+=5) {
+            if (bot->displayedGrid[i][j]=='~' && bot->saveMisses [i][j]=='~') {
+                bot->checkeredGrid[counter][0] = convertToLetter(j);
+                if (i==9) {
+                    bot->checkeredGrid[counter][1] = '1';
+                    bot->checkeredGrid[counter][2] = '0';
+                    bot->checkeredGrid[counter][3] = '\0';
+                } else {
+                    bot->checkeredGrid[counter][1] = (i+1) + '0';
+                    bot->checkeredGrid[counter][2] = '\0';
+                }
+                counter += 1;
+            }
+        }
+        index += 1;
+    }
+}
+
+
+// checkered grid for considering Battleship was the last ship
+void battleshipCheckeredGrid (struct Player* bot) {
+    int counter = 0;
+    int index = 4;
+    for (int i=0; i<10; i++) {
+        int j = index%4;
+        for ( ; j<10; j+=4) {
+            if (bot->displayedGrid[i][j]=='~' && bot->saveMisses [i][j]=='~') {
+                bot->checkeredGrid[counter][0] = convertToLetter(j);
+                if (i==9) {
+                    bot->checkeredGrid[counter][1] = '1';
+                    bot->checkeredGrid[counter][2] = '0';
+                    bot->checkeredGrid[counter][3] = '\0';
+                } else {
+                    bot->checkeredGrid[counter][1] = (i+1) + '0';
+                    bot->checkeredGrid[counter][2] = '\0';
+                }
+                counter += 1;
+            }
+        }
+        index += 1;
+    }
+}
+
+
+// checkered grid for considering Destroyer was the last ship
+void destroyerCheckeredGrid (struct Player* bot) {
+    int counter = 0;
+    int index = 3;
+    for (int i=0; i<10; i++) {
+        int j = index%3;
+        for ( ; j<10; j+=3) {
+            if (bot->displayedGrid[i][j]=='~' && bot->saveMisses [i][j]=='~') {
+                bot->checkeredGrid[counter][0] = convertToLetter(j);
+                if (i==9) {
+                    bot->checkeredGrid[counter][1] = '1';
+                    bot->checkeredGrid[counter][2] = '0';
+                    bot->checkeredGrid[counter][3] = '\0';
+                } else {
+                    bot->checkeredGrid[counter][1] = (i+1) + '0';
+                    bot->checkeredGrid[counter][2] = '\0';
+                }
+                counter += 1;
+            }
+        }
+        index += 1;
+    }
+}
+
+
+// checkered grid for considering Submarine was the last ship
+void submarineCheckeredGrid (struct Player* bot) {
+    int counter = 0;
+    for (int i=0; i<10; i++) {
+        int j;
+        if (i%2==0) {
+            j=0;
+        } else j=1;
+        for ( ; j<10; j+=2) {
+            if (bot->displayedGrid[i][j]=='~' && bot->saveMisses [i][j]=='~') {
+                bot->checkeredGrid[counter][0] = convertToLetter(j);
+                if (i==9) {
+                    bot->checkeredGrid[counter][1] = '1';
+                    bot->checkeredGrid[counter][2] = '0';
+                    bot->checkeredGrid[counter][3] = '\0';
+                } else {
+                    bot->checkeredGrid[counter][1] = (i+1) + '0';
+                    bot->checkeredGrid[counter][2] = '\0';
+                }
+                counter += 1;
+            }
         }
     }
 }
+
+
+// checks which ship is the last one we need to sink and changes the checkered grid accordingly
+void checksLastShipGrid (struct Player* bot) {
+    if (bot->nbrOfShipsSunk==3) {
+        if (bot->CarrierCount>0) {
+            carrierCheckeredGrid(bot);
+        } else if (bot->SubmarineCount>0) {
+            submarineCheckeredGrid(bot);
+        } else if (bot->BattleshipCount>0) {
+            battleshipCheckeredGrid(bot);
+        } else if (bot->DestroyerCount>0) {
+            destroyerCheckeredGrid(bot);
+        }
+    }
+}
+
+
+// alternates players according to their turn
+void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2) {
+    if (*p == p1) {
+        *p = p2;
+    } else *p = p1;
+}
+
 
 // prints the grid
 void printGrid (struct Player *p) {
@@ -84,6 +339,8 @@ void printGrid (struct Player *p) {
     }
 }
 
+
+// prints displayed grid
 void printDisplayedGrid(struct Player *p) {
     printf("\tA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\n");
     for (int i=0; i<p->rows; i++) {
@@ -95,7 +352,8 @@ void printDisplayedGrid(struct Player *p) {
     }
 }
 
-// prints the smoked grid
+
+// prints the smoke grid
 void printSmokeGrid (struct Player *p) {
     printf("\tA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\n");
     for (int i=0; i<p->rows; i++) {
@@ -187,7 +445,7 @@ bool validCoordinates (char c []) {
 }
 
 
-// check if orientation is valid
+// checks if orientation is valid
 bool validOrientation (char o []) {
     if ((strcmp(o, "horizontal")==0) || (strcmp(o, "vertical")==0)) {
         return true;
@@ -199,9 +457,11 @@ bool validOrientation (char o []) {
 
 
 // checks if the placement of the ship is beyond the boundaries of the grid or not
-bool checkBeyondGrid (char orientation [], int nbrOfCells, int col, int row) {
+bool checkBeyondGrid (struct Player *p, char orientation [], int nbrOfCells, int col, int row) {
     if ((strcmp(orientation, "horizontal")==0 && ((col+nbrOfCells)-1)>9) || (strcmp(orientation, "vertical")==0 && (((row)+nbrOfCells)-1)>9)) {
-        printf("Coordinates chosen result in an out-of-bounds placement of the ship. Please enter new coordinates.\n");
+        if (p->bot==false) {
+            printf("Coordinates chosen result in an out-of-bounds placement of the ship. Please enter new coordinates.\n");
+        }
         return true; //return true if it is beyond the boundaries and can't be placed
     }
     return false;
@@ -214,7 +474,9 @@ bool checkCellAvailability (struct Player *p, char orientation [], int nbrOfCell
         int i=row;
         for (int j=col; j<(col+nbrOfCells); j++) {
             if (p->grid[i][j]=='X') {
-                printf("Coordinates chosen are already occupied. Please enter new coordinates.\n");
+                if (p->bot==false) {
+                    printf("Coordinates chosen are already occupied. Please enter new coordinates.\n");
+                }
                 return false;
             }
         }
@@ -222,7 +484,9 @@ bool checkCellAvailability (struct Player *p, char orientation [], int nbrOfCell
         int j=col;
         for (int i=row; i<(row+nbrOfCells); i++) {
             if (p->grid[i][j]=='X') {
-                printf("Coordinates chosen are already occupied. Please enter new coordinates.\n");
+                if (p->bot==false) {
+                    printf("Coordinates chosen are already occupied. Please enter new coordinates.\n");
+                }
                 return false;
             }
         }
@@ -252,6 +516,29 @@ void placeShips (struct Player *p, char orientation [], int nbrOfCells, int col,
 }
 
 
+// places the ships of the bot
+void placeShips (struct Player *bot) {
+    int numberOfCells = 5;
+    while (numberOfCells>1) {
+        srand(time(NULL));
+        int row = rand() % 10; // random row
+        int column = rand() % 10; // random column
+        int r = rand() % 2; // in order to choose a random orientation
+        char orientation [11];
+        if (r==0) {
+            strcpy(orientation, "horizontal");
+        } else strcpy(orientation, "vertical");
+        while (checkBeyondGrid(bot, orientation, numberOfCells, column, row) && !checkCellAvailability(bot, orientation, numberOfCells, column, row)) {
+            row = rand() % 10;         // keeps on randomizing the values of row and column until valid
+            column = rand() % 10;
+        }
+        placeShips(bot, orientation, numberOfCells, column, row);
+        numberOfCells-=1;
+    }
+}
+
+
+// decrements counter for a specific ship everytime a part of it is hit
 void decrementShipTypeCounter (struct Player *p, char c) {
     if (c=='5') {
         p->CarrierCount-=1;
@@ -264,6 +551,7 @@ void decrementShipTypeCounter (struct Player *p, char c) {
     }
 
 }
+
 
 //returns true if ship has been sunk and false if it was not
 void shipSunk (struct Player *p, struct Player *p1) {
@@ -300,6 +588,9 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
             if (strcmp(difficultyLevel, "easy")==0) {
                 p->displayedGrid[row][col]='o'; //changes display on grid if missed and if in easy mode
             }
+            if (p->bot==true) {
+                p->saveMisses[row][col]='o'; // saves the misses for medium & hard bot modes
+            }
             p1->grid[row][col]='o';
             return false;
         } else if (p1->grid[row][col]=='X') {
@@ -312,7 +603,6 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
         }
     }
 }
-
 
 
 // radar looks for ships in 2x2 area
@@ -328,6 +618,8 @@ void radar (struct Player *p, int col, int row) {
     printf("No enemy ships found.\n");
 }
 
+
+// radar move can't be done on row/column 9;
 bool checkInBounds (int row, int col) {
     if (row==9 || col==9) {
         printf("Index out of bounds.\n");
@@ -345,6 +637,8 @@ void smoke (struct Player *p, int col, int row) {
     }
 }
 
+
+// fires at the chosen coordinates and states whether it was a hit or a miss
 void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinates[], char difficultyLevel[]) {
 
     if (HitOrMiss(nextPlayer, otherPlayer, coordinates, difficultyLevel)) {
@@ -356,6 +650,126 @@ void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinate
 
 }
 
+
+// checks the next available index in which we need to add
+int getIndex (struct Player* bot) {
+    for (int i=0; i<17; i++) {
+        if (strcmp(bot->nextHit[i], "")==0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+// gets index of next hit
+int getNextHit (struct Player* bot) {
+    for (int i=0; i<17; i++) {
+        if ((strcmp(bot->nextHit[i], "")!=0) && (strcmp(bot->nextHit[i], "-1")!=0)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+// fires at random, fires according to probability for hard mode starting from the 4th turn, fires according to checkered grid for the last ship in medium and hard modes
+void randomFire (struct Player* bot, struct Player* otherPlayer, char difficultyLevel[]) {
+    srand(time(NULL));
+    if (!strcmp(difficultyLevel, "easy")==0 && bot->nbrOfShipsSunk==3) {
+        int row = rand() % 10;
+        int col = rand() % 10;
+        checksLastShipGrid(bot);
+        while (bot->checkeredGrid[row][col]=='~') {
+            row = rand() % 10;
+            col = rand() % 10;
+        }
+        char* coordinates = botCoordinates(row, col);
+        fire(bot, otherPlayer, coordinates, difficultyLevel);
+        if (bot->displayedGrid[row][col]=='X') {
+            strcpy(bot->prevHit, coordinates);
+            bot->isRandom = false;
+        }
+    } else if (strcmp(difficultyLevel, "hard") && bot->turnCount>3) {  // probability method starts after at least 4 turns
+        calculateProbability(bot);
+        char* coordinates = findMaxProbability(bot);
+        int row = getRow(coordinates);
+        int col = convertToColumnIndex(coordinates[0]);
+        fire(bot, otherPlayer, coordinates, difficultyLevel);
+        if (bot->displayedGrid[row][col]=='X') {
+            strcpy(bot->prevHit, coordinates);
+            bot->isRandom = false;
+        }
+    } else {
+        int row = rand() % 10;
+        int col = rand() % 10;
+        while (bot->displayedGrid[row][col]!='~') {
+            row = rand() % 10;
+            col = rand() % 10;
+        }
+        char* coordinates= botCoordinates(row, col);
+        fire(bot, otherPlayer, coordinates,difficultyLevel);
+        if (bot->displayedGrid[row][col]=='X') {
+            strcpy(bot->prevHit, coordinates);
+            bot->isRandom = false;
+        }
+    }
+
+}
+
+
+// adds the adjacent cells to the adjacency array
+void fireAdjacency (struct Player* bot, struct Player* otherPlayer, char difficultyLevel[]) {
+    if (bot->adjacencyCounter==4) {
+        int n = getNextHit(bot);
+        if (n==-1) {
+            bot->isRandom = true;
+            randomFire(bot, otherPlayer, difficultyLevel);
+        } else {
+            strcpy(bot->prevHit, bot->nextHit[n]);
+            bot->nextHit[n] = "-1";
+        }
+    } else {
+        char *coordinates = bot->prevHit;
+        int row = getRow(coordinates);
+        int col = convertToColumnIndex(coordinates[0]);
+        if (bot->adjacencyCounter==0) {
+            if (row+1<10 && bot->displayedGrid[row+1][col]=='~' && bot->saveMisses[row+1][col]=='~') {
+                fire(bot, otherPlayer, botCoordinates(row+1, col), difficultyLevel);
+                if (bot->displayedGrid[row+1][col]=='X') {
+                    bot->nextHit[getIndex(bot)] = botCoordinates(row+1, col);
+                }
+            } else bot->adjacencyCounter+=1;
+        }
+        if (bot->adjacencyCounter==1) {
+            if (row-1>-1 && bot->displayedGrid[row-1][col]=='~' && bot->saveMisses[row-1][col]=='~') {
+                fire(bot, otherPlayer, botCoordinates(row-1, col), difficultyLevel);
+                if (bot->displayedGrid[row-1][col]=='X') {
+                    bot->nextHit[getIndex(bot)] = botCoordinates(row-1, col);
+                }
+            } else bot->adjacencyCounter+=1;
+        }
+        if (bot->adjacencyCounter==2) {
+            if (col+1<10 && bot->displayedGrid[row][col+1]=='~' && bot->saveMisses[row][col+1]=='~') {
+                fire(bot, otherPlayer, botCoordinates(row, col+1), difficultyLevel);
+                if (bot->displayedGrid[row][col+1]=='X') {
+                    bot->nextHit[getIndex(bot)] = botCoordinates(row, col+1);
+                }
+            } else bot->adjacencyCounter+=1;
+        }
+        if (bot->adjacencyCounter==3) {
+            if (col-1>-1 && bot->displayedGrid[row][col-1]=='~' && bot->saveMisses[row][col-1]=='~') {
+                fire(bot, otherPlayer, botCoordinates(row, col-1), difficultyLevel);
+                if (bot->displayedGrid[row][col-1]=='X') {
+                    bot->nextHit[getIndex(bot)] = botCoordinates(row, col-1);
+                }
+            } else bot->adjacencyCounter+=1;
+        }
+    }
+}
+
+
+// gets the next coordinates for artillery
 char* nextCoordinates1 (char coordinates[]) {
     char *c = malloc(4 * sizeof(char));
     c[0] = coordinates[0] + 1;
@@ -370,6 +784,8 @@ char* nextCoordinates1 (char coordinates[]) {
     return c;
 }
 
+
+// gets the next coordinates for artillery
 char* nextCoordinates2 (char coordinates[]) {
     char *c = malloc(4 * sizeof(char));
     c[0] = coordinates[0];
@@ -384,16 +800,18 @@ char* nextCoordinates2 (char coordinates[]) {
     return c;
 }
 
-void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]) {
 
+// artillery move: fires at a 2x2 area
+void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]) {
     fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
     fire(nextPlayer, otherPlayer, nextCoordinates1(coordinates), difficultyLevel);
     fire(nextPlayer, otherPlayer, nextCoordinates2(coordinates), difficultyLevel);
     fire(nextPlayer, otherPlayer, nextCoordinates1(nextCoordinates2(coordinates)), difficultyLevel);
     nextPlayer->unlockedArtillery = false;
-
 }
 
+
+// when it is chosen to use the torpedo move on a row
 void torpedoRow (struct Player *nextPlayer, struct Player *otherPlayer, char row [], char difficultyLevel []) {
     char coordinates [4];
     if (strcasecmp(row, "1") == 0) {
@@ -425,6 +843,8 @@ void torpedoRow (struct Player *nextPlayer, struct Player *otherPlayer, char row
     nextPlayer->unlockedTorpedo = false;
 }
 
+
+// when it is chosen to use the torpedo move on a column
 void torpedoColumn (struct Player *nextPlayer, struct Player *otherPlayer, char col [], char difficultyLevel []) {
     char *coordinates = malloc(3 * sizeof(char));
     coordinates [0] = col[0];
@@ -437,38 +857,146 @@ void torpedoColumn (struct Player *nextPlayer, struct Player *otherPlayer, char 
     nextPlayer->unlockedTorpedo = false;
 }
 
-void main(void)
+
+// checks if the 2x2 area chosen for the bot's artillery move at random has at a specific amount of cells not fired at before (no info of)
+bool artilleryCheck (struct Player *bot, int row, int col, int minUnknownCells) {
+    int emptyCellCounter = 0;
+    for (int j=col; j<col+2; j++) {
+        if (bot->grid[row][j]=='~' && bot->saveMisses[row][j]=='~') {
+            emptyCellCounter+=1;
+        }
+        if (bot->grid[row+1][j]=='~' && bot->saveMisses[row+1][j]=='~') {
+            emptyCellCounter+=1;
+        }
+    }
+    if (emptyCellCounter>=minUnknownCells) {
+        return true;
+    } else return false;
+}
+
+
+// checks for easy mode if the row/column chosen at random has at least 1 cell that we have no info on
+bool torpedoCheck (struct Player* bot, int n, int o) {
+    if (o==0) { // then we chose it to be a row
+        for (int j=0; j<10; j++) {
+            if (bot->grid[n][j]=='~' && bot->saveMisses[n][j]=='~') {
+                return true;
+            }
+        }
+    } else {
+        for (int i=0; i<10; i++) {
+            if (bot->grid[i][n]=='~' && bot->saveMisses[i][n]=='~') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+// searches for the row or column (according to the one needed) that we have the least info on in order to use the torpedo move on it
+int leastInfo (struct Player* bot, int o) {
+    int r;
+    int c;
+    int colCounter = 0;
+    int rowCounter = 0;
+    int rMax = -1;
+    int cMax = -1;
+   if (o==0) {
+       for (int i=0; i<10; i++) {
+           for (int j=0; j<10; j++) {
+               if (bot->grid[i][j]=='~' && bot->saveMisses[i][j]=='~') {
+                   rowCounter+=1;
+               }
+           }
+           if (rowCounter>rMax) {
+               rMax = rowCounter;
+               r = i;
+           }
+           rowCounter = 0;
+       }
+       return r;
+   } else {
+       for (int j=0; j<10; j++) {
+           for (int i=0; i<10; i++) {
+               if (bot->grid[i][j]=='~' && bot->saveMisses[i][j]=='~') {
+                   colCounter+=1;
+               }
+           }
+           if (colCounter>cMax) {
+               cMax = colCounter;
+               c = j;
+           }
+           colCounter = 0;
+       }
+       return c;
+   }
+}
+
+
+// chooses the bot's next move
+void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
+    srand(time(NULL));
+
+    if (bot->unlockedArtillery) {
+        int row = rand() % 10;
+        int column = rand() % 10;
+        int minUnknownCells;
+        if (strcmp(difficultyLevel, "easy")) {
+            minUnknownCells = 1;
+        } else minUnknownCells = 2;
+        while (!artilleryCheck(bot, row, column, minUnknownCells)) {
+            row = rand() % 10;
+            column = rand() % 10;
+        }
+        artillery(bot, p, difficultyLevel, botCoordinates(row, column));
+    } else if (bot->unlockedTorpedo) {
+        int o = rand() % 2;
+        int t;
+        char i [2];
+        if (strcmp(difficultyLevel, "easy")) {
+            t = (rand() % 10);
+            while (!torpedoCheck(bot, t, o)) { // as long as the row/column doesn't have any unknown cells, change it
+                t = (rand() % 10);
+            }
+        } else {
+            t = leastInfo(bot, o); // get the row/column that we have the least info on
+        }
+        if (o==0) {
+            i[0] = t + '0'; // converts it to a character
+            torpedoRow(bot, p, i, difficultyLevel);
+        } else {
+            i[0] = convertToLetter(t);  //needs the column as a letter
+            torpedoColumn(bot, p, i, difficultyLevel);
+        }
+    }
+    // for fire move
+    if (bot->isRandom==true) {
+        randomFire(bot, p, difficultyLevel);
+    } else fireAdjacency(bot, p, difficultyLevel);
+
+}
+
+
+/*void main(void)
 {
 
     //initialize player 1
-    struct Player p1;
-    p1.rows = 10;
-    p1.columns = 10;
-    p1.placedShips = false; //did not place ships yet
-    p1.nbrOfShipsSunk = 0;
-    p1.radarCount = 3;
-    p1.smokeCount = 0;
-    initializeGrid(&p1);
-    initializeDisplayedGrid(&p1);
-    initializeShipGrid(&p1);
+    struct Player p;
+    p.bot = false;
+    initialize(&p);
 
-
-    //initialize player 2
-    struct Player p2;
-    p2.rows = 10;
-    p2.columns = 10;
-    p2.placedShips = false;
-    p2.nbrOfShipsSunk = 0;
-    p2.radarCount = 3;
-    p1.smokeCount = 0;
-    initializeGrid(&p2);
-    initializeDisplayedGrid(&p2);
-    initializeShipGrid(&p2);
+    //initialize bot
+    struct Player BOT;
+    char a [] = "BOT";
+    strcpy(BOT.name, a);
+    BOT.bot = true;
+    initialize(&BOT);
 
 
     //asking for difficulty level
     char difficultyLevel [20];
-    printf("Please enter the tracking difficulty level (easy/hard) of your choice:\t");
+    printf("Please enter the tracking difficulty level (easy/medium/hard) of your choice:\t");
     scanf("%s", difficultyLevel);
     toLower(difficultyLevel);
     while ((strcmp(difficultyLevel, "easy")!=0 && strcmp(difficultyLevel, "hard")!=0)) { //keeps on asking until input is valid
@@ -479,10 +1007,9 @@ void main(void)
 
 
     //asking for the names of the players
-    printf("Player 1, please enter your name:\t");
-    scanf("%s", p1.name);
-    printf("Player 2, please enter your name:\t");
-    scanf("%s", p2.name);
+    printf("Please enter your name:\t");
+    scanf("%s", p.name);
+
 
 
     //choosing who gets the first turn randomly
@@ -491,17 +1018,18 @@ void main(void)
     srand((unsigned int)time(NULL));
     int num = rand()%2;
     if (num==0) {
-        nextPlayer = &p1;
-        otherPlayer = &p2;
+        nextPlayer = &p;
+        otherPlayer = &BOT;
     } else {
-        nextPlayer = &p2;
-        otherPlayer = &p1;
+        nextPlayer = &BOT;
+        otherPlayer = &p;
     }
     printf("%s%s\n", nextPlayer->name, " will go first."); //notifying who will have the first turn
 
+    // place ships for bot
 
     //placement of ships on the grid
-    while (!p1.placedShips || !p2.placedShips) { //asks both players starting with the chosen one for the placement of ships
+    while (!p.placedShips) { //asks the player for the placement of ships
         printf("%s, %s\n", nextPlayer->name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
         int counter=5; //acts as the size of the ship as well as for the sequence of the questions
         while (true) {
@@ -515,14 +1043,13 @@ void main(void)
             toLower(orientation);
             int col = convertToColumnIndex(coordinates[0]);
             int row = getRow(coordinates);
-            if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(orientation,counter, col, row)) && (checkCellAvailability(nextPlayer, orientation, counter, col, row))){
+            if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(nextPlayer, orientation, counter, col, row))){
                 placeShips(nextPlayer, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
                 counter --;
             }
             printGrid(nextPlayer);
         }
-        nextPlayer->placedShips = true;
-        alternatePlayers(&nextPlayer,&p1,&p2);
+        p.placedShips = true;
         system("clear");  //clears terminal on mac
     }
 
@@ -628,8 +1155,9 @@ void main(void)
             nextPlayer->torpedoMove = (nextPlayer->turnCount)+1;
         }
 
-    alternatePlayers(&nextPlayer,&p1,&p2);
-    alternatePlayers(&otherPlayer,&p1,&p2);
+    alternatePlayers(&nextPlayer,&p,&BOT);
+    alternatePlayers(&otherPlayer,&p,&BOT);
 
 }
 }
+*/
