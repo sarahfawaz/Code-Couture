@@ -1027,7 +1027,7 @@ int countUnknownCells(int rows, int columns, char displayedGrid[10][10], int row
 void botRadarMove(struct Player* bot, struct Player* opponent, int difficulty)
 {
     // to check if radar still has any radar moves left
-    if(bot->radarCount >= 3)
+    if(bot->radarCount <= 3)
     {
         printf("Bot reached maximum radar moves allowed.\n");
         return;
