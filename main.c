@@ -1229,9 +1229,12 @@ void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
                 bot->radarCount++;
             }
         }
-
+    //for smoke move
+    if(bot->smokeCount > 0){
+        smokeBot(bot, p, difficultyLevel);
+        bot->smokeCount = bot->smokeCount - 1;
+    }
 }
-
 
 /*void main(void)
 {
