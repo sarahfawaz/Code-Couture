@@ -1,0 +1,54 @@
+#ifndef FUNCS_H
+#define FUNCS_H
+#include "player.h"
+void initializeNextHit (struct Player* bot);
+void initialize (struct Player* p);
+void calculateProbability (struct Player* bot);
+void calculateProbabilityPlayer (struct Player* player);
+char* botCoordinates (int row, int column);
+char* findMaxProbability (struct Player* bot);
+char* findMaxProbabilityPlayer (struct Player* player);
+char convertToLetter (int c);
+void carrierCheckeredGrid (struct Player* bot);
+void battleshipCheckeredGrid (struct Player* bot);
+void destroyerCheckeredGrid (struct Player* bot);
+void submarineCheckeredGrid (struct Player* bot);
+void checksLastShipGrid (struct Player* bot);
+void alternatePlayers(struct Player **p, struct Player *p1, struct Player *p2);
+void printGrid (struct Player *p);
+void printDisplayedGrid(struct Player *p);
+void printSmokeGrid (struct Player *p);
+char* getQuestion (int i);
+void toLower (char a[]);
+int getRow(char c[]);
+int convertToColumnIndex (char a);
+bool validCoordinates (char c []);
+bool validOrientation (char o []);
+bool checkBeyondGrid (struct Player *p, char orientation [], int nbrOfCells, int col, int row);
+bool checkCellAvailability (struct Player *p, char orientation [], int nbrOfCells, int col, int row);
+void placeShips1 (struct Player *p, char orientation [], int nbrOfCells, int col, int row);
+void placeShips2 (struct Player *bot);
+void decrementShipTypeCounter (struct Player *p, char c);
+void shipSunk (struct Player *p, struct Player *p1);
+bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char difficultyLevel []);
+void radar (struct Player *p, int col, int row);
+bool checkInBounds (int row, int col);
+void smoke (struct Player *p, int col, int row);
+void fire(struct Player *nextPlayer, struct Player *otherPlayer, char coordinates[], char difficultyLevel[]);
+int getIndex (struct Player* bot);
+int getNextHit (struct Player* bot);
+void randomFire (struct Player* bot, struct Player* otherPlayer, char difficultyLevel[]);
+char* nextCoordinates1 (char coordinates[]);
+char* nextCoordinates2 (char coordinates[]);
+void artillery(struct Player *nextPlayer, struct Player *otherPlayer, char difficultyLevel[], char coordinates[]);
+void torpedoRow (struct Player *nextPlayer, struct Player *otherPlayer, char row [], char difficultyLevel []);
+void torpedoColumn (struct Player *nextPlayer, struct Player *otherPlayer, char col [], char difficultyLevel []);
+bool artilleryCheck (struct Player *bot, int row, int col, int minUnknownCells);
+bool torpedoCheck (struct Player* bot, int n, int o);
+int leastInfo (struct Player* bot, int o);
+int countUnknownCells(int rows, int columns, char displayedGrid[10][10], int row, int column);
+void botRadarMove(struct Player* bot, struct Player* opponent, int difficulty);
+void smokeBot (struct Player *bot, struct Player *p, char difficultyLevel[]);
+bool smokeCheck (struct Player *bot, int row, int col, int minUnknownCells);
+void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []);
+#endif
