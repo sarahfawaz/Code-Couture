@@ -71,7 +71,7 @@ void initialize (struct Player* p) {
             p->displayedGrid[i][j]='~';
             p->shipGrid[i][j]='~';
             if (p->bot==true) {
-                p->checkeredGrid[i][j]='~';
+                //p->checkeredGrid[i][j]='~'; checkered grid isnt a 2D array
                 p->probability [i][j] = 0;
                 p->saveMisses [i][j] = '~';
             }
@@ -1092,6 +1092,22 @@ void botRadarMove(struct Player* bot, struct Player* opponent, int difficulty)
         printf("No enemy ships found.\n");
 }
 
+// checks if the 2x2 area chosen for the bot's smoke move at random has a specific amount of cells that contain a ship
+bool smokeCheck (struct Player *bot, int row, int col, int minUnknownCells) {
+    int shipCellCounter = 0;
+    for (int j=col; j<col+2; j++) {
+        if (bot->smokeGrid[row][j]=='X') {
+            shipCellCounter+=1;
+        }
+        if (bot->smokeGrid[row+1][j]=='X'){
+            shipCellCounter+=1;
+        }
+    }
+    if (shipCellCounter>=minUnknownCells) {
+        return true;
+    } else return false;
+}
+
 // bot version of smoke function
 void smokeBot (struct Player *bot, struct Player *p, char difficultyLevel[]) {
     int minKnownCells;
@@ -1137,22 +1153,6 @@ void smokeBot (struct Player *bot, struct Player *p, char difficultyLevel[]) {
             }
         }
     }
-}
-
-// checks if the 2x2 area chosen for the bot's smoke move at random has a specific amount of cells that contain a ship
-bool smokeCheck (struct Player *bot, int row, int col, int minUnknownCells) {
-    int shipCellCounter = 0;
-    for (int j=col; j<col+2; j++) {
-        if (bot->smokeGrid[row][j]=='X') {
-            shipCellCounter+=1;
-        }
-        if (bot->smokeGrid[row+1][j]=='X'){
-            shipCellCounter+=1;
-        }
-    }
-    if (shipCellCounter>=minUnknownCells) {
-        return true;
-    } else return false;
 }
 
 // chooses the bot's next move
@@ -1236,6 +1236,236 @@ void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
     }
 }
 
+void main(void){
+    //initialize player 1
+    struct Player p;
+    p.bot = false;
+    initialize(&p);
+
+    //initialize bot
+    struct Player BOT;
+    char a [] = "BOT";
+    strcpy(BOT.name, a);
+    BOT.bot = true;
+    initialize(&BOT);
+
+
+    //asking for difficulty level
+    char difficultyLevel [20];
+    printf("Please enter the tracking difficulty level (easy/medium/hard) of your choice:\t");
+    scanf("%s", difficultyLevel);
+    toLower(difficultyLevel);
+    while ((strcmp(difficultyLevel, "easy")!=0 && strcmp(difficultyLevel, "medium")!=0 && strcmp(difficultyLevel, "hard")!=0)) { //keeps on asking until input is valid
+        printf("Invalid input. Please enter the tracking difficulty level (easy/medium/hard) of your choice:\t");
+        scanf("%s", difficultyLevel);
+        toLower(difficultyLevel);
+    }
+
+
+    //asking for the names of the players
+    printf("Please enter your name:\t");
+    scanf("%s", p.name);
+
+
+
+    //choosing who gets the first turn randomly
+    struct Player* nextPlayer;
+    struct Player* otherPlayer;
+    srand((unsigned int)time(NULL));
+    int num = rand()%2;
+    if (num==0) {
+        nextPlayer = &p;
+        otherPlayer = &BOT;
+    } else {
+        nextPlayer = &BOT;
+        otherPlayer = &p;
+    }
+    printf("%s%s\n", nextPlayer->name, " will go first."); //notifying who will have the first turn
+
+    // place ships for bot
+
+    //placement of ships on the grid
+    while (!p.placedShips) { //asks the player for the placement of ships
+        if(!nextPlayer->bot){
+            printf("%s's Grid\n", nextPlayer->name);
+            printGrid(nextPlayer);
+            printf("%s, %s\n", nextPlayer->name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
+            int counter=5; //acts as the size of the ship as well as for the sequence of the questions
+            while (true) {
+                if (counter==1) {
+                    break; //asked about the coordinates of all ships
+                }
+                printf("%s", getQuestion(counter));
+                char orientation [11]; //vertical or horizontal
+                char coordinates [4]; //column and row
+                scanf("%s%s", coordinates, orientation);
+                toLower(orientation);
+                int col = convertToColumnIndex(coordinates[0]);
+                int row = getRow(coordinates);
+                if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(nextPlayer, orientation, counter, col, row))){
+                    placeShips1(nextPlayer, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
+                    counter --;
+                }
+                printf("%s's Grid\n", nextPlayer->name);
+                printGrid(nextPlayer);
+            }
+            p.placedShips = true;
+        }else{
+            printf("%s's Grid\n", otherPlayer->name);
+            printGrid(otherPlayer);
+            printf("%s, %s\n", otherPlayer->name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
+            int counter=5; //acts as the size of the ship as well as for the sequence of the questions
+            while (true) {
+                if (counter==1) {
+                    break; //asked about the coordinates of all ships
+                }
+                printf("%s", getQuestion(counter));
+                char orientation [11]; //vertical or horizontal
+                char coordinates [4]; //column and row
+                scanf("%s%s", coordinates, orientation);
+                toLower(orientation);
+                int col = convertToColumnIndex(coordinates[0]);
+                int row = getRow(coordinates);
+                if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(otherPlayer, orientation, counter, col, row))){
+                    placeShips1(otherPlayer, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
+                    counter --;
+                }
+                printf("%s's Grid\n", otherPlayer->name);
+                printGrid(otherPlayer);
+            }
+            p.placedShips = true;
+        }
+    }
+
+    while (true) {
+        nextPlayer->turnCount +=1;
+        if ((nextPlayer->artilleryMove>0)&&(nextPlayer->artilleryMove<nextPlayer->turnCount)) {
+            nextPlayer->unlockedArtillery = false;
+        }
+        if ((nextPlayer->torpedoMove>0)&&(nextPlayer->torpedoMove<nextPlayer->turnCount)) {
+            nextPlayer->unlockedTorpedo = false;
+        }
+        if(nextPlayer->bot){
+            nextMove(nextPlayer, otherPlayer, difficultyLevel);
+        }else{
+            char move[10];
+            printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+            printDisplayedGrid(nextPlayer);
+            printf("%s, what is your next move?\n\tfire\n\tradar\n\tsmoke\n\tartillery\n\ttorpedo\n", nextPlayer->name);
+            scanf("%s", &move);
+            toLower(move);
+            while ((strcmp(move, "fire")) != 0 && (strcmp(move, "radar")) != 0 && (strcmp(move, "smoke")) != 0 && (strcmp(move, "artillery")) != 0 && (strcmp(move, "torpedo")) != 0) {
+                printf("Invalid input. %s, what would you like to do?\nfire\nradar\nsmoke\nartillery\ntorpedo\n", nextPlayer->name);
+                scanf("%s", &move);
+                toLower(move);
+            }
+            char location[3];
+            char coordinates[4];
+            if((strcmp(move, "fire")) == 0){
+                printf("Enter coordinates to fire (e.g., B3): ");
+                scanf("%s", coordinates);
+                if (!validCoordinates(coordinates)) {
+                    printf("Turn skipped.\n");
+                } else{
+                    printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                    fire(nextPlayer, otherPlayer, coordinates, difficultyLevel);
+                } 
+            }else if((strcmp(move, "radar")) == 0){
+                if(nextPlayer->radarCount == 0){
+                    printf("%s, you do not have any more radars. Turn skipped.\n", nextPlayer->name);
+                    alternatePlayers(&nextPlayer,&p,&BOT);
+                    alternatePlayers(&otherPlayer,&p,&BOT);
+                    continue;
+                }
+                printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                printDisplayedGrid(nextPlayer);
+                nextPlayer->radarCount--;
+                printf("Where would you like to activate your radar?\n");
+                scanf("%s", &location);
+                if (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+                    printf("Turn skipped.\n");
+                } else radar(otherPlayer, convertToColumnIndex(location[0]), getRow(location));
+            }else if((strcmp(move, "smoke")) == 0) {
+                if(nextPlayer->smokeCount == 0){
+                    printf("%s, you do not have the option to use the smoke move right now.\nIt can be used each time an opponent's ship is sunk.\nTurn skipped.\n", nextPlayer->name);
+                    alternatePlayers(&nextPlayer,&p,&BOT);
+                    alternatePlayers(&otherPlayer,&p,&BOT);
+                    continue;
+                }
+                printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, nextPlayer->name);
+                printSmokeGrid(nextPlayer);
+                nextPlayer->smokeCount--;
+                printf("Where would you like to activate your smoke? ");
+                scanf("%s", &location);
+                if (!checkInBounds(getRow(location), convertToColumnIndex(location[0])) || !validCoordinates(location)) {
+                    printf("Turn skipped.\n");
+                } else {
+                    smoke(nextPlayer, convertToColumnIndex(location[0]), getRow(location));
+                    printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, nextPlayer->name);
+                    printSmokeGrid(nextPlayer);
+                }
+            }else if((strcmp(move, "artillery")) == 0){
+                if (nextPlayer->nbrOfShipsSunk==1 && nextPlayer->unlockedArtillery) {
+                    printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                    printDisplayedGrid(nextPlayer);
+                    printf("Enter top-left coordinates for artillery (e.g., B3): ");
+                    scanf("%s", coordinates);
+                        while (!validCoordinates(coordinates) || !checkInBounds(getRow(coordinates), convertToColumnIndex(coordinates[0]))) {
+                            printf("Please try again.\n");
+                            scanf("%s", coordinates);
+                        }
+                    artillery(nextPlayer, otherPlayer, difficultyLevel, coordinates);
+                } else {
+                    if (nextPlayer->nbrOfShipsSunk==0) {
+                        printf("Artillery move is not unlocked yet.\n");
+                    } else printf("Artillery move is not available anymore.\n");
+                }
+                printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                printDisplayedGrid(nextPlayer);
+            }else{
+                char rOc [3];
+                if (nextPlayer->nbrOfShipsSunk==3 && nextPlayer->unlockedTorpedo) {
+                    printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                    printDisplayedGrid(nextPlayer);
+                    printf("Enter row/column of torpedo: ");
+                    scanf("%s", rOc);
+                    toLower(rOc);
+                    if (rOc[0]>='a'&& rOc[0]<='j' && rOc[1]=='\0') {
+                        torpedoColumn(nextPlayer, otherPlayer, rOc, difficultyLevel);
+                    } else if (((rOc[0] >= '1' && rOc[0] <= '9' && rOc[1]=='\0') || (rOc[0]=='1' && rOc[1]=='0' && rOc[2]=='\0'))){
+                        torpedoRow(nextPlayer, otherPlayer, rOc, difficultyLevel);
+                    }
+                } else {
+                    if (nextPlayer->nbrOfShipsSunk<3) {
+                        printf("Torpedo move is not unlocked yet.\n");
+                    } else printf("Torpedo move is not available anymore.\n");
+                }
+                printf("%s's turn. Viewing %s's board.\n", nextPlayer->name, otherPlayer->name);
+                printDisplayedGrid(otherPlayer);
+            }
+            
+        }
+        
+        shipSunk(nextPlayer, otherPlayer);
+        if(p.BattleshipCount<1 && p.CarrierCount<1 && p.DestroyerCount<1 && p.SubmarineCount<1){
+            printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
+            break;
+        }
+        if(BOT.BattleshipCount<1 && BOT.CarrierCount<1 && BOT.DestroyerCount<1 && BOT.SubmarineCount<1){
+            printf("Congratulations, %s. You sunk all of %s's ships!", nextPlayer->name, otherPlayer->name);
+            break;
+        }
+            if (nextPlayer->artilleryMove==0 && nextPlayer->nbrOfShipsSunk==1) {
+                nextPlayer->artilleryMove = (nextPlayer->turnCount)+1;
+            }   
+            if (nextPlayer->torpedoMove==0 && nextPlayer->nbrOfShipsSunk==3) {
+                nextPlayer->torpedoMove = (nextPlayer->turnCount)+1;
+            }
+
+        alternatePlayers(&nextPlayer,&p,&BOT);
+        alternatePlayers(&otherPlayer,&p,&BOT);
+    }
+}
 /*void main(void)
 {
 
