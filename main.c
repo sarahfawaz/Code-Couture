@@ -571,7 +571,7 @@ bool checkCellAvailability (struct Player *p, char orientation [], int nbrOfCell
 
 
 // places the ships on the grid based on input
-void placeShips (struct Player *p, char orientation [], int nbrOfCells, int col, int row) {
+void placeShips1 (struct Player *p, char orientation [], int nbrOfCells, int col, int row) {
     toLower(orientation);
     if (strcmp(orientation, "horizontal")==0) {
         int i=row;
@@ -592,7 +592,7 @@ void placeShips (struct Player *p, char orientation [], int nbrOfCells, int col,
 
 
 // places the ships of the bot
-void placeShips (struct Player *bot) {
+void placeShips2 (struct Player *bot) {
     int numberOfCells = 5;
     while (numberOfCells>1) {
         srand(time(NULL));
@@ -607,7 +607,7 @@ void placeShips (struct Player *bot) {
             row = rand() % 10;         // keeps on randomizing the values of row and column until valid
             column = rand() % 10;
         }
-        placeShips(bot, orientation, numberOfCells, column, row);
+        placeShips1(bot, orientation, numberOfCells, column, row);
         numberOfCells-=1;
     }
 }
