@@ -1282,14 +1282,37 @@ void main(void){
     }
     printf("%s%s\n", nextPlayer->name, " will go first."); //notifying who will have the first turn
 
-    // place ships for bot
+    // place ships for bot (temporary)
+    while(!BOT.placedShips){
+        srand(time(NULL));
+        int counter=5; //acts as the size of the ship as well as for the sequence of the questions
+        while (true) {
+            if (counter==1) {
+                break; //asked about the coordinates of all ships
+            }
+            int num = rand()%2;
+            char orientation [11]; //vertical or horizontal
+            if (num==0) {
+                strcpy(orientation, "vertical");
+            } else {
+                strcpy(orientation, "horizontal");
+            }
+            int row = rand()%10;
+            int col = rand()%10;
+
+            if (validOrientation(orientation) && (!checkBeyondGrid(&BOT, orientation,counter, col, row)) && (checkCellAvailability(&BOT, orientation, counter, col, row))){
+                placeShips1(&BOT, orientation, counter, col, row);
+                counter --;
+            }
+        }
+        BOT.placedShips = true;
+    }
 
     //placement of ships on the grid
-    while (!p.placedShips) { //asks the player for the placement of ships
-        if(!nextPlayer->bot){
-            printf("%s's Grid\n", nextPlayer->name);
-            printGrid(nextPlayer);
-            printf("%s, %s\n", nextPlayer->name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
+    while (!p.placedShips) {
+        printf("%s's Grid\n", p.name);
+        printGrid(&p);
+        printf("%s, %s\n", p.name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
             int counter=5; //acts as the size of the ship as well as for the sequence of the questions
             while (true) {
                 if (counter==1) {
@@ -1302,39 +1325,14 @@ void main(void){
                 toLower(orientation);
                 int col = convertToColumnIndex(coordinates[0]);
                 int row = getRow(coordinates);
-                if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(nextPlayer, orientation, counter, col, row))){
-                    placeShips1(nextPlayer, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
+                if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(&p, orientation, counter, col, row))){
+                    placeShips1(&p, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
                     counter --;
                 }
-                printf("%s's Grid\n", nextPlayer->name);
-                printGrid(nextPlayer);
+                printf("%s's Grid\n", p.name);
+                printGrid(&p);
             }
             p.placedShips = true;
-        }else{
-            printf("%s's Grid\n", otherPlayer->name);
-            printGrid(otherPlayer);
-            printf("%s, %s\n", otherPlayer->name, "please enter the desired coordinates as well as whether or not you want the placement to be vertical or horizontal (ex: B3 horizontal) for the following ships:");
-            int counter=5; //acts as the size of the ship as well as for the sequence of the questions
-            while (true) {
-                if (counter==1) {
-                    break; //asked about the coordinates of all ships
-                }
-                printf("%s", getQuestion(counter));
-                char orientation [11]; //vertical or horizontal
-                char coordinates [4]; //column and row
-                scanf("%s%s", coordinates, orientation);
-                toLower(orientation);
-                int col = convertToColumnIndex(coordinates[0]);
-                int row = getRow(coordinates);
-                if ((validCoordinates(coordinates)) && validOrientation(orientation) && (!checkBeyondGrid(&p, orientation,counter, col, row)) && (checkCellAvailability(otherPlayer, orientation, counter, col, row))){
-                    placeShips1(otherPlayer, orientation, counter, convertToColumnIndex(coordinates[0]), getRow(coordinates));
-                    counter --;
-                }
-                printf("%s's Grid\n", otherPlayer->name);
-                printGrid(otherPlayer);
-            }
-            p.placedShips = true;
-        }
     }
 
     while (true) {
