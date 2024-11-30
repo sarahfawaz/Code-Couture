@@ -632,6 +632,7 @@ bool HitOrMiss (struct Player *p, struct Player *p1,  char coordinates [], char 
 void radar(struct Player *nextPlayer, struct Player *otherPlayer, int col, int row) {
     if(nextPlayer->bot==true)
     {
+        nextPlayer->radarHitFound=false;
         nextPlayer->radarFireCount=0;
         strcpy(nextPlayer->radarCoordinates, ""); 
     }
