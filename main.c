@@ -697,8 +697,7 @@ int getNextHit (struct Player* bot) {
 void randomFire (struct Player* bot, struct Player* otherPlayer, char difficultyLevel[]) {
     srand(time(NULL));
 
-    if (!strcmp(bot->radarCoordinates, "") && bot->radarHitFound==false) 
-    {
+    if (!strcmp(bot->radarCoordinates, "") && bot->radarHitFound==false) {
         char* coordinates;
         if (bot->radarCount==0) {
             strcpy(coordinates, bot->radarCoordinates);
@@ -717,9 +716,7 @@ void randomFire (struct Player* bot, struct Player* otherPlayer, char difficulty
             bot->isRandom = false;
             strcpy(bot->prevHit, coordinates);
         } else bot->saveMisses[getRow(coordinates)][convertToColumnIndex(coordinates)]='o';
-    }
-
-    if (!strcmp(difficultyLevel, "easy")==0 && bot->nbrOfShipsSunk==3) {
+    } else if (!strcmp(difficultyLevel, "easy")==0 && bot->nbrOfShipsSunk==3) {
         int row = rand() % 10;
         int col = rand() % 10;
         checksLastShipGrid(bot);
