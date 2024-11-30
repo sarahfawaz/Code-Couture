@@ -37,6 +37,7 @@ struct Player {
     char radarCoordinates[4];
     int radarFireCount;
     bool radarHitFound;
+    bool lastShipFound;
 };
 // initializes nextHit array
 void initializeNextHit (struct Player* bot) {
@@ -62,6 +63,7 @@ void initialize (struct Player* p) {
     p->nbrOfShipsSunk = 0;
     p->radarCount = 3;
     p->smokeCount = 0;
+    p->lastShipFound = false;
     for (int i=0; i<p->rows; i++) {
         for (int j=0; j<p->columns; j++) {
             p->grid[i][j]='~';
@@ -268,6 +270,39 @@ char convertToLetter (int c) {
         l = 'I';
     } else l = 'J';
     return l;
+}
+//checkered method to find last ship (medium)
+void checkered(struct Player* bot, struct Player* otherPlayer, char coordinates[], char difficultyLevel[]){
+    if(bot->lastShipFound){
+        fireAdjacency(bot, otherPlayer, difficultyLevel);
+        return;
+    }
+    int shipSize = checksLastShip(bot);
+    for(int i = 0; i < bot->rows; i++){
+        int j = i % shipSize;
+        for(; j < bot->columns; j+=shipSize){
+            if(bot->displayedGrid[i][j]=='~' && bot->saveMisses [i][j]=='~'){
+                if(HitOrMiss(bot, otherPlayer, coordinates, difficultyLevel)){
+                    bot->lastShipFound = true;
+                    return;
+                }
+            }
+        }
+    }
+}
+// checks which ship is the last one we need to sink and changes the checkered grid accordingly
+int checksLastShip (struct Player* bot) {
+    if (bot->nbrOfShipsSunk==3) {
+        if (bot->CarrierCount>0) {
+            return 5;
+        } else if (bot->SubmarineCount>0) {
+            return 2;
+        } else if (bot->BattleshipCount>0) {
+            return 4;
+        } else if (bot->DestroyerCount>0) {
+            return 3;
+        }
+    }
 }
 // checkered grid for considering Carrier was the last ship
 void carrierCheckeredGrid (struct Player* bot) {
