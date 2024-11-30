@@ -955,47 +955,32 @@ int leastInfo (struct Player* bot, int o) {
    }
 }
 //bot radar move
-void botRadarMove(struct Player* bot, struct Player* opponent, char difficultyLevel[])
-{
-    // to check if radar still has any radar moves left
-    if(bot->radarCount = 3)
-    {
-        printf("Bot reached maximum radar moves allowed.\n");
-        return;
-    }
+void botRadarMove(struct Player* bot, struct Player* opponent, char difficultyLevel[]) {
+    
     int x=0, y=0;
-    bool found=false;
-
     // easy difficulty : random radar with at least 1 unknown surrounding cell
-    if(strcmp(difficultyLevel, "easy")==0)
-    {
-        do{
+    if(strcmp(difficultyLevel, "easy")==0) {
+        do {
             x = rand() % 10;
             y = rand() % 10;
         }
         while(!artilleryAndRadarCheck(bot, x, y, 1));
         radar(bot, opponent, y, x);
     }
-    // medium difficulty : radar near a previous hit with at least 2 unknown surrounding cells
-    else if(strcmp(difficultyLevel, "medium")==0)
-    {
-        if(!artilleryAndRadarCheck(bot, x , y, 2))
-        {
-            do{
-                x= rand() % 10;
-                y= rand() % 10;
-            }
-            while(!artilleryAndRadarCheck(bot, x,y,2));
+    // medium difficulty : radar with at least 2 unknown surrounding cells
+    else if(strcmp(difficultyLevel, "medium")==0) {
+        do {
+                x = rand() % 10;
+                y = rand() % 10;
         }
+        while(!artilleryAndRadarCheck(bot, x,y,2));
         radar(bot, opponent, y, x); 
     }
-    // hard difficulty : radar in a high probability area with at least 3 unknown surrounding cells
-    else
-    {
+    // hard difficulty : radar in a high probability area 
+    else{
         calculateProbability(bot);
         char coord[] = findMaxProbability;
         radar(bot, opponent, convertToColumnIndex(coord), getRow(coord));
-
     }
     bot->radarCount++; //update the nb of radar moves used by the bot
 }
