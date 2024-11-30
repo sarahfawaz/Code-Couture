@@ -956,6 +956,7 @@ int leastInfo (struct Player* bot, int o) {
        return c;
    }
 }
+//bot radar move
 void botRadarMove(struct Player* bot, struct Player* opponent, char difficultyLevel[])
 {
     // to check if radar still has any radar moves left
