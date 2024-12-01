@@ -635,12 +635,6 @@ bool checkCellAvailability (struct Player *p, char orientation [], int nbrOfCell
 
 // places the ships on the grid based on input
 void placeShips1 (struct Player *p, char orientation [], int nbrOfCells, int col, int row) {
-    printf("%d", row);
-    printf("\n");
-    printf("%d", col);
-    printf("\n");
-    printf("%d", nbrOfCells);
-    printf("\n");
     toLower(orientation);
     if (strcmp(orientation, "horizontal")==0) {
         int i=row;
@@ -676,12 +670,6 @@ void placeShips2 (struct Player *bot) {
             row = rand() % 10;         // keeps on randomizing the values of row and column until valid
             column = rand() % 10;
         }
-        printf("%drow:", row);
-        printf("\n");
-        printf("%dcolumn: ", column);
-        printf("\n");
-        printf("%dnumberofcells: ", numberOfCells);
-        printf("\n");
         placeShips1(bot, orientation, numberOfCells, column, row);
         numberOfCells-=1;
     }
