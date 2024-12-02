@@ -50,6 +50,12 @@ void initializeNextHit (struct Player* bot) {
     bot->nextHit [17] = "\0";
 }
 
+void initializeRadarCoordinates (struct Player* bot) {
+    for (int i = 0; i < 4; i++) {
+        bot->radarCoordinates[i] = "";  // Each element points to the empty string
+    }
+}
+
 
 
 // initializes everything needed
@@ -87,7 +93,7 @@ void initialize (struct Player* p) {
         p->isRandom = true;
         strcpy(p->prevHit, "");
         initializeNextHit(p->nextHit);
-        strcpy(p->radarCoordinates, "");
+        initializeRadarCoordinates(p);
         p->radarFireCount=0;
         p->radarHitFound=false;
         p->adjacencyRadar = false;
