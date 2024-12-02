@@ -666,7 +666,7 @@ void placeShips2 (struct Player *bot) {
         if (r==0) {
             strcpy(orientation, "horizontal");
         } else strcpy(orientation, "vertical");
-        while (checkBeyondGrid(bot, orientation, numberOfCells, column, row) && !checkCellAvailability(bot, orientation, numberOfCells, column, row)) {
+        while (checkBeyondGrid(bot, orientation, numberOfCells, column, row) || !checkCellAvailability(bot, orientation, numberOfCells, column, row)) {
             row = rand() % 10;         // keeps on randomizing the values of row and column until valid
             column = rand() % 10;
         }
@@ -1191,7 +1191,8 @@ void smokeBot (struct Player *bot, struct Player *p, char difficultyLevel[]) {
 void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
     srand(time(NULL));
 
-    if (bot->unlockedArtillery) {
+    if (bot->nbrOfShipsSunk==1 && bot->unlockedArtillery) {
+        printf("Artillery move was chosen by the bot. ");
         int row = rand() % 10;
         int column = rand() % 10;
         int minUnknownCells;
@@ -1204,7 +1205,8 @@ void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
         }
         artillery(bot, p, difficultyLevel, botCoordinates(row, column));
         return;
-    } else if (bot->unlockedTorpedo) {
+    } else if (bot->nbrOfShipsSunk==3 && bot->unlockedTorpedo) {
+        printf("Torpedo move was chosen by the bot. ");
         int o = rand() % 2;
         int t;
         char i [2];
@@ -1229,57 +1231,64 @@ void nextMove (struct Player *bot, struct Player *p, char difficultyLevel []) {
     int randRadar = rand() % 2; //randomly decided whether to use the radar move or not
 
     if ((bot->turnCount==1 || bot->turnCount==2) && strcmp(difficultyLevel, "hard")) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     } else if (bot->turnCount==3 && strcmp(difficultyLevel, "hard") && p->smokeCount==0) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     } else if (bot->nbrOfShipsSunk==3 && strcmp(difficultyLevel, "hard")) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     }
 
     if (bot->turnCount==2 && strcmp(difficultyLevel, "medium")) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     } else if (bot->turnCount>=5 && bot->radarCount>0 && randRadar==1) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     }
 
     if (bot->turnCount>=7 && strcmp(difficultyLevel, "easy") && randRadar==1 && bot->radarCount>0) {
+        printf("Radar move was chosen by the bot. ");
         botRadarMove(bot, p, difficultyLevel);
         return;
     }
 
     if ((p->nbrOfShipsSunk==2 || p->nbrOfShipsSunk==3) && bot->smokeCount>0 && difficultyLevel=="hard") {
+        printf("Smoke move was chosen by the bot. ");
         smokeBot(bot, p, difficultyLevel);
     } else if (bot->smokeCount>0 && difficultyLevel=="hard") {
+        printf("Smoke move was chosen by the bot. ");
         smokeBot(bot, p, difficultyLevel);
     }
     if (p->nbrOfShipsSunk==1 && strcmp(difficultyLevel, "medium")) {
+        printf("Smoke move was chosen by the bot. ");
         smokeBot(bot, p, difficultyLevel);
     }
     int randSmoke = rand() % 2;
     if (bot->smokeCount>0 && randSmoke==1 && difficultyLevel=="easy") {
+        printf("Smoke move was chosen by the bot. ");
         smokeBot(bot, p, difficultyLevel);
     }
 
 
     // for fire move
     if (bot->isRandom==true) {
+        printf("Fire move was chosen by the bot. ");
         randomFire(bot, p, difficultyLevel);
         return;
     } else {
+        printf("Fire move was chosen by the bot. ");
         fireAdjacency(bot, p, difficultyLevel);
         return;
     }
 
-    //for smoke move
-    if(bot->smokeCount > 0){
-        smokeBot(bot, p, difficultyLevel);
-        bot->smokeCount = bot->smokeCount - 1;
-    }
 }
 
 
